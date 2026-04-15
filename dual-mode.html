@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RepFit | Message Templates</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#3a4a00",
+                    "surface": "#0e0e0e",
+                    "surface-container-highest": "#262626",
+                    "on-secondary-container": "#fffca4",
+                    "primary-fixed": "#cafd00",
+                    "primary-fixed-dim": "#beee00",
+                    "on-error-container": "#ffd2c8",
+                    "on-primary-container": "#4a5e00",
+                    "tertiary-fixed": "#fce047",
+                    "secondary-container": "#636100",
+                    "surface-dim": "#0e0e0e",
+                    "tertiary": "#ffeea5",
+                    "surface-variant": "#262626",
+                    "on-tertiary-container": "#5d5000",
+                    "on-tertiary-fixed": "#483d00",
+                    "inverse-on-surface": "#565555",
+                    "surface-container-low": "#131313",
+                    "on-tertiary-fixed-variant": "#685900",
+                    "on-tertiary": "#665800",
+                    "on-surface-variant": "#adaaaa",
+                    "on-background": "#ffffff",
+                    "surface-container": "#1a1a1a",
+                    "on-surface": "#ffffff",
+                    "on-primary-fixed-variant": "#526900",
+                    "error-dim": "#d53d18",
+                    "outline": "#767575",
+                    "outline-variant": "#484847",
+                    "on-error": "#450900",
+                    "inverse-surface": "#fcf9f8",
+                    "on-primary": "#516700",
+                    "surface-container-lowest": "#000000",
+                    "secondary": "#ece856",
+                    "inverse-primary": "#516700",
+                    "tertiary-container": "#fce047",
+                    "surface-container-high": "#20201f",
+                    "on-secondary-fixed": "#434100",
+                    "background": "#0e0e0e",
+                    "error-container": "#b92902",
+                    "on-secondary-fixed-variant": "#605e00",
+                    "error": "#ff7351",
+                    "tertiary-dim": "#edd13a",
+                    "on-secondary": "#565400",
+                    "secondary-fixed-dim": "#ddda49",
+                    "secondary-fixed": "#ece856",
+                    "primary-container": "#cafd00",
+                    "primary": "#f3ffca",
+                    "surface-tint": "#f3ffca",
+                    "surface-bright": "#2c2c2c",
+                    "tertiary-fixed-dim": "#edd13a",
+                    "secondary-dim": "#ddda49",
+                    "primary-dim": "#beee00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "body": ["Manrope", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-headline { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(38, 38, 38, 0.6);
+            backdrop-filter: blur(40px);
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-bottom: 1px solid #f3ffca !important;
+            box-shadow: 0 4px 12px -4px rgba(202, 253, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar -->
+<aside class="fixed left-0 h-screen w-64 bg-[#131313] border-r border-white/5 flex flex-col py-8 gap-4 z-40">
+<div class="px-8 mb-8">
+<div class="text-2xl font-black italic text-[#cafd00] tracking-tighter font-headline">RepFit</div>
+</div>
+<nav class="flex flex-col gap-2 px-4">
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white hover:bg-[#20201f] hover:scale-[1.02] transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#cafd00] bg-[#1a1a1a] rounded-r-full font-bold transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-medium">Templates</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white hover:bg-[#20201f] hover:scale-[1.02] transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span class="font-medium">Workflows</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white hover:bg-[#20201f] hover:scale-[1.02] transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-medium">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white hover:bg-[#20201f] hover:scale-[1.02] transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-medium">Team</span>
+</a>
+</nav>
+<div class="mt-auto px-4 flex flex-col gap-2">
+<div class="px-4 py-6 mb-4 bg-surface-container rounded-lg">
+<div class="flex items-center gap-3 mb-1">
+<img class="w-10 h-10 rounded-full border border-primary-fixed/20" data-alt="Close-up professional portrait of a fitness trainer in a dark modern gym setting with moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCs9LtDNyVo1t4E9CCIgJRn96kClTw_mOkB8qFhiwF6h5tee7cxoD3PjkVkkS5MJ8CgiFhZxOQEgTUuSGjSQsgJROrl4ZpDOX1SvWAUms4u5oqr096zIpMpKWPK0bXhsPIbdSNJ2APR3w4b7Hk_cteEpn5PWs_Vh3DFNwqLgTcRYfaPn1htDIuI_waRI9_weR1LOOq6yAVHipfOOmmcbv5sO0vqlyARbB5g-_1asLZLzStKgqU6mYn5gQsEDdjO0yPNAjiJfsxNVU"/>
+<div>
+<div class="text-sm font-bold font-headline">RepFit Admin</div>
+<div class="text-[10px] text-primary-fixed uppercase tracking-widest font-label">Premium Tier</div>
+</div>
+</div>
+</div>
+<a class="flex items-center gap-3 px-4 py-2 text-white/40 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="text-sm">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-white/40 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="text-sm">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen bg-surface p-12">
+<!-- Header Section -->
+<header class="flex justify-between items-end mb-16">
+<div>
+<span class="text-[10px] text-primary-fixed uppercase tracking-[0.2em] font-label mb-2 block">Campaign Suite</span>
+<h1 class="text-6xl font-black font-headline tracking-tighter">Templates</h1>
+</div>
+<!-- Sleek Pill Toggle -->
+<div class="bg-surface-container-low p-1.5 rounded-full flex gap-1">
+<button class="px-6 py-2 bg-surface-container-highest text-on-surface text-sm font-bold rounded-full transition-all">Single Request</button>
+<button class="px-6 py-2 text-on-surface-variant hover:text-on-surface text-sm font-medium rounded-full transition-all">Bulk Upload</button>
+</div>
+</header>
+<div class="grid grid-cols-12 gap-12">
+<!-- Manual Form View -->
+<div class="col-span-7 flex flex-col gap-12">
+<section class="bg-surface-container-low p-10 rounded-lg">
+<div class="grid grid-cols-2 gap-8">
+<div class="flex flex-col gap-2">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">Customer Name</label>
+<input class="bg-surface-container-lowest border-0 border-b border-outline-variant/30 py-4 text-lg font-medium text-on-surface placeholder:text-white/10 transition-all" placeholder="e.g. Marcus Aurelius" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">Phone Number</label>
+<input class="bg-surface-container-lowest border-0 border-b border-outline-variant/30 py-4 text-lg font-medium text-on-surface placeholder:text-white/10 transition-all" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+</div>
+<div class="mt-12 flex flex-col gap-2">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">AI Message Context</label>
+<textarea class="bg-surface-container-lowest border-0 border-b border-outline-variant/30 py-4 text-lg font-medium text-on-surface placeholder:text-white/10 resize-none transition-all" placeholder="Describe the goal... (e.g. check-in on their weight loss progress and invite to weekend HIIT class)" rows="3"></textarea>
+</div>
+<div class="mt-12 flex justify-between items-center">
+<button class="px-8 py-4 bg-surface-variant text-on-surface text-sm font-bold rounded-lg border border-outline-variant/15 hover:scale-[1.02] transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="auto_awesome">auto_awesome</span>
+                            Generate AI Draft
+                        </button>
+<button class="px-12 py-4 bg-primary-fixed text-on-primary-fixed text-sm font-black uppercase tracking-tighter rounded-lg hover:scale-[1.02] active:scale-95 transition-transform shadow-[0_0_20px_rgba(202,253,0,0.15)]">
+                            Send Request
+                        </button>
+</div>
+</section>
+<!-- Bulk Preview (Asymmetric Placeholder) -->
+<div class="bg-surface-container p-8 rounded-lg border border-outline-variant/10 opacity-30">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline font-bold text-xl">Bulk Campaign Queue</h3>
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</div>
+<div class="space-y-4">
+<div class="h-12 bg-surface-container-highest w-full rounded-lg"></div>
+<div class="h-12 bg-surface-container-highest w-[90%] rounded-lg"></div>
+<div class="h-12 bg-surface-container-highest w-[95%] rounded-lg"></div>
+</div>
+</div>
+</div>
+<!-- SMS Preview Visual -->
+<div class="col-span-5 relative">
+<div class="sticky top-12">
+<div class="absolute -top-12 -right-12 w-64 h-64 bg-primary-fixed/5 blur-[120px] rounded-full"></div>
+<div class="glass-panel p-8 rounded-[2rem] border border-white/5 relative overflow-hidden">
+<div class="flex flex-col items-center mb-8">
+<div class="w-12 h-12 bg-surface-container-highest rounded-full flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<span class="text-xs font-bold text-on-surface-variant tracking-widest font-label uppercase">SMS Preview</span>
+</div>
+<!-- Message Bubbles -->
+<div class="space-y-6">
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-surface-container-highest px-5 py-3 rounded-2xl rounded-bl-none max-w-[85%]">
+<p class="text-sm text-on-surface leading-relaxed">Hey Marcus! This is coach Sarah from RepFit.</p>
+</div>
+<span class="text-[10px] text-on-surface-variant ml-2">10:42 AM</span>
+</div>
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-surface-container-highest px-5 py-3 rounded-2xl rounded-bl-none max-w-[85%] border-l-2 border-primary-fixed">
+<p class="text-sm text-on-surface leading-relaxed">I saw you crushed your PR yesterday. Ready to take on the Saturday HIIT challenge? 🔥</p>
+</div>
+<span class="text-[10px] text-on-surface-variant ml-2">Just now</span>
+</div>
+<div class="pt-8 border-t border-white/5 mt-8">
+<div class="flex items-center gap-3 bg-surface-container-lowest/50 px-4 py-3 rounded-full border border-white/5">
+<div class="flex-1 text-xs text-on-surface-variant">Type a message...</div>
+<span class="material-symbols-outlined text-primary-fixed text-lg" data-icon="send">send</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Decorative Element -->
+<div class="mt-8 flex gap-4 overflow-hidden">
+<div class="flex-1 bg-surface-container-low h-1 rounded-full overflow-hidden">
+<div class="bg-primary-fixed w-1/3 h-full"></div>
+</div>
+<div class="flex-1 bg-surface-container-low h-1 rounded-full"></div>
+<div class="flex-1 bg-surface-container-low h-1 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Performance Green Floating CTA (Mobile Context Suppression) -->
+<!-- Suppressed on desktop, but follows Design System logic if used -->
+<button class="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-primary-fixed rounded-full flex items-center justify-center shadow-2xl z-50">
+<span class="material-symbols-outlined text-on-primary-fixed" data-icon="add">add</span>
+</button>
+</body></html>
