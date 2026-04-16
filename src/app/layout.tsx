@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -15,7 +15,7 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: "RepFit Dashboard",
-  description: "High-Performance B2B Editorial Dashboard",
+  description: "High-Performance B2B AI Messaging",
 };
 
 export default function RootLayout({
@@ -24,18 +24,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${manrope.variable} h-full antialiased dark`}
-    >
-      <body className="flex h-full bg-background text-foreground font-sans">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto w-full">
-          <div className="mx-auto max-w-7xl px-8 lg:px-12 py-10 w-full h-full">
-            {children}
-          </div>
-        </main>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={`${inter.variable} ${manrope.variable} h-full antialiased dark`}
+      >
+        <body className="h-full bg-[#0e0e0e] text-foreground font-sans">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
