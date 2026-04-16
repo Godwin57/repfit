@@ -11,6 +11,7 @@ import {
   Loader2,
   Mail,
   MessageSquare,
+  AlertCircle, // NEW: Imported for the warning toast
 } from "lucide-react";
 import {
   processCsvUpload,
@@ -21,7 +22,7 @@ import {
 } from "@/app/actions/campaign";
 
 export default function ReviewRequestPage() {
-  const [mode, setMode] = useState<"single" | "bulk">("single");
+  const [mode, setMode] = useState<"single" | "bulk">("bulk");
 
   // Single Request State
   const [name, setName] = useState("");
@@ -33,14 +34,23 @@ export default function ReviewRequestPage() {
   const [parsedData, setParsedData] = useState<CustomerData[]>([]);
   const [aiMessages, setAiMessages] = useState<CustomerMessage[]>([]);
 
+  // Interactive Queue State
+  const [selectedCustomerIndex, setSelectedCustomerIndex] = useState(0);
+
   // Phase 7.5 States
-  const [isSmsEnabled, setIsSmsEnabled] = useState(false);
-  const [isEmailEnabled, setIsEmailEnabled] = useState(true);
+  const [isSmsEnabled, setIsSmsEnabled] = useState(true);
+  const [isEmailEnabled, setIsEmailEnabled] = useState(false);
   const [senderName, setSenderName] = useState("Sarah");
   const [businessName, setBusinessName] = useState("RepFit");
-  const [generationMode, setGenerationMode] = useState<"AI Assist" | "Manual Template">("AI Assist");
-  const [manualTemplate, setManualTemplate] = useState("Hey {Name}! This is {Sender} from {Gym}. We'd love your feedback!");
-  const [subscriptionTier] = useState<"basic" | "pro">("basic");
+  const [generationMode, setGenerationMode] = useState<
+    "AI Assist" | "Manual Template"
+  >("AI Assist");
+  const [manualTemplate, setManualTemplate] = useState(
+    "Hey {Name}! This is {Sender} from {Gym}. We'd love your feedback!",
+  );
+
+  // NEW: Warning Toast State
+  const [channelWarning, setChannelWarning] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,6 +65,7 @@ export default function ReviewRequestPage() {
         const data = await processCsvUpload(csvText);
         setParsedData(data);
         setAiMessages([]); // Reset on new upload
+        setSelectedCustomerIndex(0); // Reset selection to top
       } catch (err) {
         console.error("Failed to parse CSV", err);
       }
@@ -72,17 +83,25 @@ export default function ReviewRequestPage() {
     e.target.value = "";
   };
 
+  // NEW: Trigger the timeout toast
+  const triggerWarning = () => {
+    setChannelWarning(true);
+    setTimeout(() => setChannelWarning(false), 3000);
+  };
+
   const handleToggleSms = () => {
-    if (!isSmsEnabled && subscriptionTier === "basic") {
-      alert("Upgrade to Pro to unlock SMS campaigns.");
+    if (isSmsEnabled && !isEmailEnabled) {
+      triggerWarning();
       return;
     }
-    if (isSmsEnabled && !isEmailEnabled) return; // Prevent disabling last active
     setIsSmsEnabled(!isSmsEnabled);
   };
 
   const handleToggleEmail = () => {
-    if (isEmailEnabled && !isSmsEnabled) return;
+    if (isEmailEnabled && !isSmsEnabled) {
+      triggerWarning();
+      return;
+    }
     setIsEmailEnabled(!isEmailEnabled);
   };
 
@@ -91,7 +110,7 @@ export default function ReviewRequestPage() {
 
     if (generationMode === "Manual Template") {
       if (!manualTemplate) return;
-      const newMessages = parsedData.map(data => {
+      const newMessages = parsedData.map((data) => {
         const msg = manualTemplate
           .replace(/{Name}/g, data.name || "")
           .replace(/{Sender}/g, senderName)
@@ -99,7 +118,7 @@ export default function ReviewRequestPage() {
 
         return {
           customer: data,
-          message: msg
+          message: msg,
         };
       });
       setAiMessages(newMessages);
@@ -123,7 +142,7 @@ export default function ReviewRequestPage() {
   };
 
   const handleMessageEdit = (index: number, newText: string) => {
-    setAiMessages(prev => {
+    setAiMessages((prev) => {
       const updated = [...prev];
       updated[index].message = newText;
       return updated;
@@ -131,7 +150,7 @@ export default function ReviewRequestPage() {
   };
 
   const insertPlaceholder = (placeholder: string) => {
-    setManualTemplate(prev => prev + placeholder);
+    setManualTemplate((prev) => prev + placeholder);
   };
 
   const handleLaunchCampaign = async () => {
@@ -140,7 +159,13 @@ export default function ReviewRequestPage() {
     // Using a dummy Gym Owner ID for now, since auth is not fully hooked up
     const gymOwnerId = "gym-owner-dummy-id";
     try {
-      const res = await saveCampaign(gymOwnerId, generationMode === "AI Assist" ? aiContextBulk : "Manual Template used.", aiMessages);
+      const res = await saveCampaign(
+        gymOwnerId,
+        generationMode === "AI Assist"
+          ? aiContextBulk
+          : "Manual Template used.",
+        aiMessages,
+      );
       if (res.success) {
         setSuccess(true);
       } else {
@@ -176,7 +201,11 @@ export default function ReviewRequestPage() {
                 setParsedData([]);
                 setAiMessages([]);
                 setAiContextBulk("");
-                setManualTemplate("Hey {Name}! This is {Sender} from {Gym}. We'd love your feedback!");
+                setManualTemplate(
+                  "Hey {Name}! This is {Sender} from {Gym}. We'd love your feedback!",
+                );
+                setGenerationMode("AI Assist");
+                setSelectedCustomerIndex(0);
               }}
             >
               Start New Campaign
@@ -188,7 +217,19 @@ export default function ReviewRequestPage() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full max-w-7xl mx-auto pb-[24px]">
+    <div className="flex flex-col w-full h-full max-w-7xl mx-auto pb-[24px] relative">
+      {/* NEW: The Premium Warning Toast */}
+      <div
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none ${channelWarning ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+      >
+        <div className="bg-[#ff3333]/10 border border-[#ff3333]/30 text-[#ff3333] px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 backdrop-blur-md">
+          <AlertCircle size={18} />
+          <span className="text-sm font-bold tracking-wide font-sans">
+            You must keep at least one channel active.
+          </span>
+        </div>
+      </div>
+
       {/* Header Section */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-[24px]">
         <div>
@@ -336,7 +377,10 @@ export default function ReviewRequestPage() {
               <div className="bg-[#131313] p-10 rounded-[4px] flex flex-col gap-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                    <label
+                      className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
+                      style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                    >
                       Sender Name
                     </label>
                     <input
@@ -347,7 +391,10 @@ export default function ReviewRequestPage() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                    <label
+                      className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
+                      style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                    >
                       Business Name
                     </label>
                     <input
@@ -360,27 +407,68 @@ export default function ReviewRequestPage() {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  <label className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                  <label
+                    className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
+                    style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                  >
                     Active Channels
                   </label>
                   <div className="flex gap-8">
-                    <div className="flex items-center gap-3 cursor-pointer group" onClick={handleToggleEmail}>
-                      <div className={`w-12 h-6 rounded-full transition-colors flex items-center px-1 ${isEmailEnabled ? 'bg-[#cafd00]' : 'bg-[#484847]/50'}`}>
-                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isEmailEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                    <div
+                      className="flex items-center gap-3 cursor-pointer group"
+                      onClick={handleToggleEmail}
+                    >
+                      <div
+                        className={`w-12 h-6 rounded-full transition-colors flex items-center px-1 ${isEmailEnabled ? "bg-[#cafd00]" : "bg-[#484847]/50"}`}
+                      >
+                        <div
+                          className={`w-4 h-4 bg-white rounded-full transition-transform ${isEmailEnabled ? "translate-x-6" : "translate-x-0"}`}
+                        />
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Mail size={16} className={isEmailEnabled ? 'text-[#ffffff]' : 'text-[#adaaaa]'} />
-                        <span className={`text-sm font-bold ${isEmailEnabled ? 'text-[#ffffff]' : 'text-[#adaaaa]'}`} style={{ fontFamily: "var(--font-inter), sans-serif" }}>Email</span>
+                        <Mail
+                          size={16}
+                          className={
+                            isEmailEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"
+                          }
+                        />
+                        <span
+                          className={`text-sm font-bold ${isEmailEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"}`}
+                          style={{
+                            fontFamily: "var(--font-inter), sans-serif",
+                          }}
+                        >
+                          Email
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 cursor-pointer group" onClick={handleToggleSms}>
-                      <div className={`w-12 h-6 rounded-full transition-colors flex items-center px-1 ${isSmsEnabled ? 'bg-[#cafd00]' : 'bg-[#484847]/50'}`}>
-                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isSmsEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                    <div
+                      className="flex items-center gap-3 cursor-pointer group"
+                      onClick={handleToggleSms}
+                    >
+                      <div
+                        className={`w-12 h-6 rounded-full transition-colors flex items-center px-1 ${isSmsEnabled ? "bg-[#cafd00]" : "bg-[#484847]/50"}`}
+                      >
+                        <div
+                          className={`w-4 h-4 bg-white rounded-full transition-transform ${isSmsEnabled ? "translate-x-6" : "translate-x-0"}`}
+                        />
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <MessageSquare size={16} className={isSmsEnabled ? 'text-[#ffffff]' : 'text-[#adaaaa]'} />
-                        <span className={`text-sm font-bold ${isSmsEnabled ? 'text-[#ffffff]' : 'text-[#adaaaa]'}`} style={{ fontFamily: "var(--font-inter), sans-serif" }}>SMS</span>
+                        <MessageSquare
+                          size={16}
+                          className={
+                            isSmsEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"
+                          }
+                        />
+                        <span
+                          className={`text-sm font-bold ${isSmsEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"}`}
+                          style={{
+                            fontFamily: "var(--font-inter), sans-serif",
+                          }}
+                        >
+                          SMS
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -438,9 +526,24 @@ export default function ReviewRequestPage() {
                       rows={3}
                     ></textarea>
                     <div className="flex gap-2 mt-4 flex-wrap">
-                      <button onClick={() => insertPlaceholder("{Name}")} className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30">Insert {'{Name}'}</button>
-                      <button onClick={() => insertPlaceholder("{Sender}")} className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30">Insert {'{Sender}'}</button>
-                      <button onClick={() => insertPlaceholder("{Gym}")} className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30">Insert {'{Gym}'}</button>
+                      <button
+                        onClick={() => insertPlaceholder("{Name}")}
+                        className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30"
+                      >
+                        Insert {"{Name}"}
+                      </button>
+                      <button
+                        onClick={() => insertPlaceholder("{Sender}")}
+                        className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30"
+                      >
+                        Insert {"{Sender}"}
+                      </button>
+                      <button
+                        onClick={() => insertPlaceholder("{Gym}")}
+                        className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30"
+                      >
+                        Insert {"{Gym}"}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -449,7 +552,11 @@ export default function ReviewRequestPage() {
                   <button
                     onClick={handleGenerateMessages}
                     disabled={
-                      isLoading || parsedData.length === 0 || (generationMode === 'AI Assist' ? !aiContextBulk : !manualTemplate)
+                      isLoading ||
+                      parsedData.length === 0 ||
+                      (generationMode === "AI Assist"
+                        ? !aiContextBulk
+                        : !manualTemplate)
                     }
                     className="w-full md:w-auto px-8 py-4 bg-[#262626] text-[#ffffff] text-sm font-bold rounded-[4px] border border-[#484847]/15 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 shadow-sm"
                     style={{ fontFamily: "var(--font-inter), sans-serif" }}
@@ -483,7 +590,8 @@ export default function ReviewRequestPage() {
                     aiMessages.map((row, idx) => (
                       <div
                         key={idx}
-                        className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-[#262626] rounded-[4px]"
+                        onClick={() => setSelectedCustomerIndex(idx)}
+                        className={`flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-[#262626] rounded-[4px] border border-[#484847]/30 cursor-pointer transition-colors ${selectedCustomerIndex === idx ? "!border-[#cafd00] bg-[#2e2e2e]" : ""}`}
                       >
                         <div className="flex items-center gap-[16px] w-full md:w-1/3 mb-2 md:mb-0">
                           <User size={16} className="text-[#adaaaa]" />
@@ -492,7 +600,7 @@ export default function ReviewRequestPage() {
                               {row.customer.name}
                             </span>
                             <span className="text-[10px] text-[#adaaaa] font-sans">
-                              {row.customer.phone}
+                              {row.customer.phone || row.customer.email}
                             </span>
                           </div>
                         </div>
@@ -500,7 +608,9 @@ export default function ReviewRequestPage() {
                           <textarea
                             className="w-full text-[12px] text-[#ffffff] bg-transparent border-0 border-l-2 border-[#484847]/30 pl-4 py-1 resize-none focus:outline-none focus:ring-0 focus:border-[#cafd00] font-sans italic custom-scrollbar"
                             value={row.message}
-                            onChange={(e) => handleMessageEdit(idx, e.target.value)}
+                            onChange={(e) =>
+                              handleMessageEdit(idx, e.target.value)
+                            }
                             rows={Math.max(2, row.message.split("\n").length)}
                           />
                         </div>
@@ -510,7 +620,8 @@ export default function ReviewRequestPage() {
                     parsedData.map((row, idx) => (
                       <div
                         key={idx}
-                        className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-[#262626] rounded-[4px]"
+                        onClick={() => setSelectedCustomerIndex(idx)}
+                        className={`flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-[#262626] rounded-[4px] border border-[#484847]/30 cursor-pointer transition-colors ${selectedCustomerIndex === idx ? "!border-[#cafd00] bg-[#2e2e2e]" : ""}`}
                       >
                         <div className="flex items-center gap-[16px] w-full md:w-1/3 mb-2 md:mb-0">
                           <User size={16} className="text-[#adaaaa]" />
@@ -519,13 +630,18 @@ export default function ReviewRequestPage() {
                               {row.name}
                             </span>
                             <span className="text-[10px] text-[#adaaaa] font-sans">
-                              {row.phone}
+                              {row.phone || row.email}
                             </span>
                           </div>
                         </div>
                         <div className="w-full md:w-2/3 md:pl-8">
                           <p className="text-[12px] text-[#adaaaa] font-sans italic border-l border-[#484847]/30 pl-4">
-                            Waiting for generation...
+                            {generationMode === "Manual Template"
+                              ? manualTemplate
+                                  .replace(/{Name}/g, row.name || "")
+                                  .replace(/{Sender}/g, senderName || "")
+                                  .replace(/{Gym}/g, businessName || "")
+                              : "Waiting for generation..."}
                           </p>
                         </div>
                       </div>
@@ -586,8 +702,8 @@ export default function ReviewRequestPage() {
                       Hey{" "}
                       {mode === "single"
                         ? name || "Marcus"
-                        : aiMessages[0]?.customer.name ||
-                          parsedData[0]?.name ||
+                        : aiMessages[selectedCustomerIndex]?.customer.name ||
+                          parsedData[selectedCustomerIndex]?.name ||
                           "Marcus"}
                       ! This is {senderName} from {businessName}.
                     </p>
@@ -603,9 +719,18 @@ export default function ReviewRequestPage() {
                       {mode === "single"
                         ? aiContextSingle ||
                           "I saw you crushed your PR yesterday. Ready to take on the Saturday HIIT challenge? 🔥"
-                        : aiMessages[0]?.message ||
-                          aiContextBulk ||
-                          "Did you know you're one of our top members this month? Drop us a review! [REVIEW_LINK] 🌟"}
+                        : aiMessages[selectedCustomerIndex]?.message ||
+                          (generationMode === "Manual Template"
+                            ? manualTemplate
+                                .replace(
+                                  /{Name}/g,
+                                  parsedData[selectedCustomerIndex]?.name ||
+                                    "Marcus",
+                                )
+                                .replace(/{Sender}/g, senderName || "{Sender}")
+                                .replace(/{Gym}/g, businessName || "{Gym}")
+                            : aiContextBulk ||
+                              "Did you know you're one of our top members this month? Drop us a review! [REVIEW_LINK] 🌟")}
                     </p>
                   </div>
                   <span className="text-[10px] text-[#adaaaa] ml-2 font-sans">

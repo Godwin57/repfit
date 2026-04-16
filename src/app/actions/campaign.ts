@@ -9,7 +9,8 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 export interface CustomerData {
   name: string;
-  phone: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface CustomerMessage {
@@ -19,7 +20,7 @@ export interface CustomerMessage {
 
 /**
  * Accepts a base64 string or raw text of a CSV file.
- * Uses papaparse to extract Name and Phone columns.
+ * Uses papaparse to extract Name, Phone, and Email columns.
  * Returns the parsed array of customers.
  */
 export async function processCsvUpload(
@@ -53,9 +54,16 @@ export async function processCsvUpload(
             normalizedRow["phonenumber"] ||
             normalizedRow["phone number"] ||
             "";
+          const email =
+            normalizedRow["email"] || normalizedRow["email address"] || "";
 
-          if (name && phone) {
-            customers.push({ name: name.trim(), phone: phone.trim() });
+          // Require a name, and AT LEAST a phone or an email
+          if (name && (phone || email)) {
+            customers.push({
+              name: name.trim(),
+              phone: phone.trim() || undefined,
+              email: email.trim() || undefined,
+            });
           }
         }
 
@@ -69,60 +77,54 @@ export async function processCsvUpload(
 }
 
 /**
- * Accepts an array of customers (Name, Phone) and the "AI Message Context" string.
- * Prompts Gemini API to generate a personalized SMS including [REVIEW_LINK].
- * Returns the array mapped with their personalized messages.
+ * Accepts an array of customers and the "AI Message Context" string.
+ * Prompts Gemini API to generate a personalized message.
  */
 export async function generateAiMessages(
   customers: CustomerData[],
   context: string,
 ): Promise<CustomerMessage[]> {
-  // Initialize the Gemini 2.5 Flash model and force it to return strictly formatted JSON
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
     generationConfig: { responseMimeType: "application/json" },
   });
 
-  // We stringify the entire array of customers to send in ONE request
   const customerListJson = JSON.stringify(customers);
 
   const prompt = `
-    You are an expert fitness marketer writing personalized SMS text messages for gym members.
+    You are an expert fitness marketer writing personalized messages for gym members.
     Overall Campaign Context: "${context}"
     
     Here is a JSON list of customers:
     ${customerListJson}
 
-    Your task: Write a short, highly engaging, personalized SMS (under 150 characters) for EACH customer based on the context. Ensure you include the placeholder [REVIEW_LINK] if asking for a review.
+    Your task: Write a short, highly engaging, personalized message for EACH customer based on the context. Ensure you include the placeholder [REVIEW_LINK] if asking for a review.
     
-    You MUST return a raw JSON array of objects. Each object must have the exact "phone" of the customer and the generated "message". 
+    You MUST return a raw JSON array of objects. Each object must have the exact "name" of the customer and the generated "message". 
     Example format:
     [
-      { "phone": "555-0101", "message": "Hey John, coach Sarah here..." }
+      { "name": "John Doe", "message": "Hey John, coach Sarah here..." }
     ]
   `;
 
   try {
-    // ONE single API call for the entire CSV
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
 
-    // Parse the AI's JSON string back into a JavaScript array
     const aiResponses = JSON.parse(text) as {
-      phone: string;
+      name: string;
       message: string;
     }[];
 
-    // Map the AI messages back to our original customer data
     const finalMessages: CustomerMessage[] = customers.map((customer) => {
-      // Find the matching AI generated message by phone number
-      const match = aiResponses.find((r) => r.phone === customer.phone);
+      // Find the matching AI generated message by Name to accommodate email-only users
+      const match = aiResponses.find((r) => r.name === customer.name);
 
       return {
         customer,
         message: match
           ? match.message
-          : `Hey ${customer.name}, checking in from RepFit! How are your workouts going? [REVIEW_LINK]`, // Fallback just in case
+          : `Hey ${customer.name}, checking in from RepFit! How are your workouts going? [REVIEW_LINK]`,
       };
     });
 
@@ -148,18 +150,21 @@ export async function saveCampaign(
         data: {
           gymOwnerId,
           totalRecipients: messagesData.length,
-          aiMessageTemplate: aiMessageContext, // Storing the context used as template
-          status: "COMPLETED", // Adjust if you want DRAFT and then a separate send step
+          aiMessageTemplate: aiMessageContext,
+          status: "COMPLETED",
         },
       });
 
       // 2. Upsert Customer records & Create Review Requests
       for (const data of messagesData) {
-        // We look up the customer by phone for this gym owner
+        // Look up the customer by phone OR email
         let customer = await tx.customer.findFirst({
           where: {
-            phoneNumber: data.customer.phone,
             gymOwnerId: gymOwnerId,
+            OR: [
+              { phoneNumber: data.customer.phone || "___NO_PHONE___" },
+              { email: data.customer.email || "___NO_EMAIL___" },
+            ],
           },
         });
 
@@ -167,15 +172,24 @@ export async function saveCampaign(
           customer = await tx.customer.create({
             data: {
               name: data.customer.name,
-              phoneNumber: data.customer.phone,
+              phoneNumber: data.customer.phone || null,
+              email: data.customer.email || null,
               gymOwnerId: gymOwnerId,
             },
           });
-        } else if (customer.name !== data.customer.name) {
-          // Optional: update the customer's name if they exist but name differs
+        } else if (
+          customer.name !== data.customer.name ||
+          (!customer.email && data.customer.email)
+        ) {
+          // Update customer if they have a new name or a newly added email
           customer = await tx.customer.update({
             where: { id: customer.id },
-            data: { name: data.customer.name },
+            data: {
+              name: data.customer.name,
+              ...(data.customer.email && !customer.email
+                ? { email: data.customer.email }
+                : {}),
+            },
           });
         }
 

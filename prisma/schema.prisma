@@ -21,13 +21,16 @@ model GymOwner {
 }
 
 model Customer {
-  id          String   @id @default(uuid())
-  name        String
-  phoneNumber String
-  gymOwnerId  String
-  createdAt   DateTime @default(now())
-
-  gymOwner       GymOwner        @relation(fields: [gymOwnerId], references: [id])
+  id            String          @id @default(uuid())
+  name          String
+  phone         String?         
+  email         String?        
+  
+  gymOwnerId    String
+  gymOwner      GymOwner        @relation(fields: [gymOwnerId], references: [id])
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   reviewRequests ReviewRequest[]
 }
 
