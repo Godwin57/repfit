@@ -9,6 +9,8 @@ import {
   Sparkles,
   CheckCircle,
   Loader2,
+  Mail,
+  MessageSquare,
 } from "lucide-react";
 import {
   processCsvUpload,
@@ -30,6 +32,15 @@ export default function ReviewRequestPage() {
   const [aiContextBulk, setAiContextBulk] = useState("");
   const [parsedData, setParsedData] = useState<CustomerData[]>([]);
   const [aiMessages, setAiMessages] = useState<CustomerMessage[]>([]);
+
+  // Phase 7.5 States
+  const [isSmsEnabled, setIsSmsEnabled] = useState(false);
+  const [isEmailEnabled, setIsEmailEnabled] = useState(true);
+  const [senderName, setSenderName] = useState("Sarah");
+  const [businessName, setBusinessName] = useState("RepFit");
+  const [generationMode, setGenerationMode] = useState<"AI Assist" | "Manual Template">("AI Assist");
+  const [manualTemplate, setManualTemplate] = useState("Hey {Name}! This is {Sender} from {Gym}. We'd love your feedback!");
+  const [subscriptionTier] = useState<"basic" | "pro">("basic");
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -61,17 +72,66 @@ export default function ReviewRequestPage() {
     e.target.value = "";
   };
 
-  const handleGenerateMessages = async () => {
-    if (parsedData.length === 0 || !aiContextBulk) return;
-    setIsLoading(true);
-    try {
-      const generated = await generateAiMessages(parsedData, aiContextBulk);
-      setAiMessages(generated);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+  const handleToggleSms = () => {
+    if (!isSmsEnabled && subscriptionTier === "basic") {
+      alert("Upgrade to Pro to unlock SMS campaigns.");
+      return;
     }
+    if (isSmsEnabled && !isEmailEnabled) return; // Prevent disabling last active
+    setIsSmsEnabled(!isSmsEnabled);
+  };
+
+  const handleToggleEmail = () => {
+    if (isEmailEnabled && !isSmsEnabled) return;
+    setIsEmailEnabled(!isEmailEnabled);
+  };
+
+  const handleGenerateMessages = async () => {
+    if (parsedData.length === 0) return;
+
+    if (generationMode === "Manual Template") {
+      if (!manualTemplate) return;
+      const newMessages = parsedData.map(data => {
+        const msg = manualTemplate
+          .replace(/{Name}/g, data.name || "")
+          .replace(/{Sender}/g, senderName)
+          .replace(/{Gym}/g, businessName);
+
+        return {
+          customer: data,
+          message: msg
+        };
+      });
+      setAiMessages(newMessages);
+    } else {
+      if (!aiContextBulk) return;
+      setIsLoading(true);
+      try {
+        const activeChannels = [];
+        if (isSmsEnabled) activeChannels.push("SMS");
+        if (isEmailEnabled) activeChannels.push("Email");
+
+        const enhancedContext = `Sender: ${senderName}. Gym: ${businessName}. Channels: [${activeChannels.join(", ")}]. Context: ${aiContextBulk}`;
+        const generated = await generateAiMessages(parsedData, enhancedContext);
+        setAiMessages(generated);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleMessageEdit = (index: number, newText: string) => {
+    setAiMessages(prev => {
+      const updated = [...prev];
+      updated[index].message = newText;
+      return updated;
+    });
+  };
+
+  const insertPlaceholder = (placeholder: string) => {
+    setManualTemplate(prev => prev + placeholder);
   };
 
   const handleLaunchCampaign = async () => {
@@ -80,7 +140,7 @@ export default function ReviewRequestPage() {
     // Using a dummy Gym Owner ID for now, since auth is not fully hooked up
     const gymOwnerId = "gym-owner-dummy-id";
     try {
-      const res = await saveCampaign(gymOwnerId, aiContextBulk, aiMessages);
+      const res = await saveCampaign(gymOwnerId, generationMode === "AI Assist" ? aiContextBulk : "Manual Template used.", aiMessages);
       if (res.success) {
         setSuccess(true);
       } else {
@@ -106,7 +166,7 @@ export default function ReviewRequestPage() {
             Campaign Launched!
           </h2>
           <p className="text-[#adaaaa] mb-10 text-lg font-sans relative z-10">
-            Your AI-generated SMS campaign is now running and securely saved.
+            Your campaign is now running and securely saved.
           </p>
           <div className="relative z-10 w-fit mx-auto">
             <PremiumButton
@@ -116,6 +176,7 @@ export default function ReviewRequestPage() {
                 setParsedData([]);
                 setAiMessages([]);
                 setAiContextBulk("");
+                setManualTemplate("Hey {Name}! This is {Sender} from {Gym}. We'd love your feedback!");
               }}
             >
               Start New Campaign
@@ -271,28 +332,124 @@ export default function ReviewRequestPage() {
                 </p>
               </label>
 
-              <div className="bg-[#131313] p-10 rounded-[4px]">
-                <div className="flex flex-col gap-2">
-                  <label
-                    className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
+              {/* Multi-Channel Toggles & Global Config */}
+              <div className="bg-[#131313] p-10 rounded-[4px] flex flex-col gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                      Sender Name
+                    </label>
+                    <input
+                      type="text"
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-4 text-lg font-medium text-[#ffffff] placeholder:text-white/10 transition-all focus:border-[#f3ffca] focus:ring-0 focus:shadow-[0_4px_12px_-4px_rgba(202,253,0,0.2)] font-sans"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                      Business Name
+                    </label>
+                    <input
+                      type="text"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      className="bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-4 text-lg font-medium text-[#ffffff] placeholder:text-white/10 transition-all focus:border-[#f3ffca] focus:ring-0 focus:shadow-[0_4px_12px_-4px_rgba(202,253,0,0.2)] font-sans"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <label className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                    Active Channels
+                  </label>
+                  <div className="flex gap-8">
+                    <div className="flex items-center gap-3 cursor-pointer group" onClick={handleToggleEmail}>
+                      <div className={`w-12 h-6 rounded-full transition-colors flex items-center px-1 ${isEmailEnabled ? 'bg-[#cafd00]' : 'bg-[#484847]/50'}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isEmailEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Mail size={16} className={isEmailEnabled ? 'text-[#ffffff]' : 'text-[#adaaaa]'} />
+                        <span className={`text-sm font-bold ${isEmailEnabled ? 'text-[#ffffff]' : 'text-[#adaaaa]'}`} style={{ fontFamily: "var(--font-inter), sans-serif" }}>Email</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 cursor-pointer group" onClick={handleToggleSms}>
+                      <div className={`w-12 h-6 rounded-full transition-colors flex items-center px-1 ${isSmsEnabled ? 'bg-[#cafd00]' : 'bg-[#484847]/50'}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isSmsEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MessageSquare size={16} className={isSmsEnabled ? 'text-[#ffffff]' : 'text-[#adaaaa]'} />
+                        <span className={`text-sm font-bold ${isSmsEnabled ? 'text-[#ffffff]' : 'text-[#adaaaa]'}`} style={{ fontFamily: "var(--font-inter), sans-serif" }}>SMS</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Generation Mode Selector */}
+              <div className="bg-[#131313] p-10 rounded-[4px] gap-8 flex flex-col">
+                <div className="flex bg-[#0e0e0e] p-1 rounded-full w-fit">
+                  <button
+                    onClick={() => setGenerationMode("AI Assist")}
+                    className={`px-6 py-2 text-sm rounded-full transition-all flex items-center ${generationMode === "AI Assist" ? "bg-[#262626] text-[#ffffff] font-bold" : "text-[#adaaaa] hover:text-[#ffffff] font-medium"}`}
                     style={{ fontFamily: "var(--font-inter), sans-serif" }}
                   >
-                    AI Message Context (Applied to all)
-                  </label>
-                  <textarea
-                    value={aiContextBulk}
-                    onChange={(e) => setAiContextBulk(e.target.value)}
-                    className="bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-4 text-lg font-medium text-[#ffffff] placeholder:text-white/10 resize-none transition-all focus:border-[#f3ffca] focus:ring-0 focus:shadow-[0_4px_12px_-4px_rgba(202,253,0,0.2)] font-sans w-full"
-                    placeholder="Provide universal context... (e.g. Congratulate them on joining the New Years Challenge)"
-                    rows={3}
-                  ></textarea>
+                    AI Assist
+                  </button>
+                  <button
+                    onClick={() => setGenerationMode("Manual Template")}
+                    className={`px-6 py-2 text-sm rounded-full transition-all flex items-center ${generationMode === "Manual Template" ? "bg-[#262626] text-[#ffffff] font-bold" : "text-[#adaaaa] hover:text-[#ffffff] font-medium"}`}
+                    style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                  >
+                    Manual Template
+                  </button>
                 </div>
+
+                {generationMode === "AI Assist" ? (
+                  <div className="flex flex-col gap-2">
+                    <label
+                      className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
+                      style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                    >
+                      AI Message Context (Applied to all)
+                    </label>
+                    <textarea
+                      value={aiContextBulk}
+                      onChange={(e) => setAiContextBulk(e.target.value)}
+                      className="bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-4 text-lg font-medium text-[#ffffff] placeholder:text-white/10 resize-none transition-all focus:border-[#f3ffca] focus:ring-0 focus:shadow-[0_4px_12px_-4px_rgba(202,253,0,0.2)] font-sans w-full"
+                      placeholder="Provide universal context... (e.g. Congratulate them on joining the New Years Challenge)"
+                      rows={3}
+                    ></textarea>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <label
+                      className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
+                      style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                    >
+                      Template Text
+                    </label>
+                    <textarea
+                      value={manualTemplate}
+                      onChange={(e) => setManualTemplate(e.target.value)}
+                      className="bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-4 text-lg font-medium text-[#ffffff] placeholder:text-white/10 resize-none transition-all focus:border-[#f3ffca] focus:ring-0 focus:shadow-[0_4px_12px_-4px_rgba(202,253,0,0.2)] font-sans w-full"
+                      placeholder="Type your precise message here..."
+                      rows={3}
+                    ></textarea>
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      <button onClick={() => insertPlaceholder("{Name}")} className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30">Insert {'{Name}'}</button>
+                      <button onClick={() => insertPlaceholder("{Sender}")} className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30">Insert {'{Sender}'}</button>
+                      <button onClick={() => insertPlaceholder("{Gym}")} className="px-3 py-1.5 bg-[#262626] text-[#adaaaa] rounded-[4px] text-xs font-bold font-sans hover:text-white hover:bg-[#333] transition-colors border border-[#484847]/30">Insert {'{Gym}'}</button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-8 flex justify-end">
                   <button
                     onClick={handleGenerateMessages}
                     disabled={
-                      isLoading || parsedData.length === 0 || !aiContextBulk
+                      isLoading || parsedData.length === 0 || (generationMode === 'AI Assist' ? !aiContextBulk : !manualTemplate)
                     }
                     className="w-full md:w-auto px-8 py-4 bg-[#262626] text-[#ffffff] text-sm font-bold rounded-[4px] border border-[#484847]/15 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 shadow-sm"
                     style={{ fontFamily: "var(--font-inter), sans-serif" }}
@@ -302,7 +459,7 @@ export default function ReviewRequestPage() {
                     ) : (
                       <Sparkles size={16} />
                     )}
-                    {isLoading ? "Generating..." : "Generate AI Messages"}
+                    {isLoading ? "Generating..." : "Generate Messages"}
                   </button>
                 </div>
               </div>
@@ -340,9 +497,12 @@ export default function ReviewRequestPage() {
                           </div>
                         </div>
                         <div className="w-full md:w-2/3 md:pl-8">
-                          <p className="text-[12px] text-[#adaaaa] truncate font-sans italic border-l border-[#484847]/30 pl-4">
-                            {row.message}
-                          </p>
+                          <textarea
+                            className="w-full text-[12px] text-[#ffffff] bg-transparent border-0 border-l-2 border-[#484847]/30 pl-4 py-1 resize-none focus:outline-none focus:ring-0 focus:border-[#cafd00] font-sans italic custom-scrollbar"
+                            value={row.message}
+                            onChange={(e) => handleMessageEdit(idx, e.target.value)}
+                            rows={Math.max(2, row.message.split("\n").length)}
+                          />
                         </div>
                       </div>
                     ))
@@ -365,7 +525,7 @@ export default function ReviewRequestPage() {
                         </div>
                         <div className="w-full md:w-2/3 md:pl-8">
                           <p className="text-[12px] text-[#adaaaa] font-sans italic border-l border-[#484847]/30 pl-4">
-                            Waiting for AI generation...
+                            Waiting for generation...
                           </p>
                         </div>
                       </div>
@@ -414,7 +574,7 @@ export default function ReviewRequestPage() {
                   className="text-[10px] font-bold text-[#adaaaa] tracking-widest uppercase"
                   style={{ fontFamily: "var(--font-inter), sans-serif" }}
                 >
-                  SMS Preview
+                  Message Preview
                 </span>
               </div>
 
@@ -429,7 +589,7 @@ export default function ReviewRequestPage() {
                         : aiMessages[0]?.customer.name ||
                           parsedData[0]?.name ||
                           "Marcus"}
-                      ! This is coach Sarah from RepFit.
+                      ! This is {senderName} from {businessName}.
                     </p>
                   </div>
                   <span className="text-[10px] text-[#adaaaa] ml-2 font-sans">
