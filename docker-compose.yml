@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: repfit-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: repfit_password
+      POSTGRES_DB: repfit_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - repfit_pgdata:/var/lib/postgresql/data
+
+volumes:
+  repfit_pgdata:

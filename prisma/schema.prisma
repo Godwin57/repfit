@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model GymOwner {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  googlePlaceId   String?
+  defaultAiPrompt String?
+  createdAt       DateTime @default(now())
+
+  customers       Customer[]
+  campaigns       Campaign[]
+  reviewRequests  ReviewRequest[]
+}
+
+model Customer {
+  id          String   @id @default(uuid())
+  name        String
+  phoneNumber String
+  gymOwnerId  String
+  createdAt   DateTime @default(now())
+
+  gymOwner       GymOwner        @relation(fields: [gymOwnerId], references: [id])
+  reviewRequests ReviewRequest[]
+}
+
+model Campaign {
+  id                String         @id @default(uuid())
+  gymOwnerId        String
+  totalRecipients   Int            @default(0)
+  aiMessageTemplate String
+  status            CampaignStatus @default(DRAFT)
+  createdAt         DateTime       @default(now())
+
+  gymOwner       GymOwner        @relation(fields: [gymOwnerId], references: [id])
+  reviewRequests ReviewRequest[]
+}
+
+enum CampaignStatus {
+  DRAFT
+  PROCESSING
+  COMPLETED
+}
+
+model ReviewRequest {
+  id                    String              @id @default(uuid())
+  customerId            String
+  campaignId            String?
+  gymOwnerId            String
+  personalizedAiMessage String
+  status                ReviewRequestStatus @default(PENDING)
+  sentAt                DateTime?
+
+  customer Customer  @relation(fields: [customerId], references: [id])
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+  gymOwner GymOwner  @relation(fields: [gymOwnerId], references: [id])
+}
+
+enum ReviewRequestStatus {
+  PENDING
+  SENT
+  CLICKED
+  REVIEWED
+}
