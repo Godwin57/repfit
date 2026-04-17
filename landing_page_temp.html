@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RepFit | High-Performance Gym SaaS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;family=Manrope:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#beee00",
+                    "on-primary-fixed-variant": "#526900",
+                    "surface-container-lowest": "#000000",
+                    "primary-fixed": "#cafd00",
+                    "on-error-container": "#ffd2c8",
+                    "error-dim": "#d53d18",
+                    "primary-container": "#cafd00",
+                    "inverse-primary": "#516700",
+                    "surface-bright": "#2c2c2c",
+                    "on-primary": "#516700",
+                    "tertiary-fixed": "#fce047",
+                    "tertiary-dim": "#edd13a",
+                    "outline-variant": "#484847",
+                    "error-container": "#b92902",
+                    "outline": "#767575",
+                    "surface": "#0e0e0e",
+                    "secondary-container": "#636100",
+                    "surface-dim": "#0e0e0e",
+                    "surface-container-highest": "#262626",
+                    "error": "#ff7351",
+                    "background": "#0e0e0e",
+                    "on-background": "#ffffff",
+                    "surface-tint": "#f3ffca",
+                    "surface-container-high": "#20201f",
+                    "tertiary": "#ffeea5",
+                    "on-secondary-fixed": "#434100",
+                    "on-secondary": "#565400",
+                    "surface-variant": "#262626",
+                    "on-tertiary-container": "#5d5000",
+                    "primary-dim": "#beee00",
+                    "secondary-fixed": "#ece856",
+                    "primary": "#f3ffca",
+                    "secondary": "#ece856",
+                    "on-error": "#450900",
+                    "on-tertiary-fixed-variant": "#685900",
+                    "secondary-dim": "#ddda49",
+                    "on-tertiary-fixed": "#483d00",
+                    "inverse-surface": "#fcf9f8",
+                    "on-surface": "#ffffff",
+                    "on-surface-variant": "#adaaaa",
+                    "on-tertiary": "#665800",
+                    "on-secondary-container": "#fffca4",
+                    "surface-container-low": "#131313",
+                    "surface-container": "#1a1a1a",
+                    "tertiary-fixed-dim": "#edd13a",
+                    "on-secondary-fixed-variant": "#605e00",
+                    "on-primary-container": "#4a5e00",
+                    "tertiary-container": "#fce047",
+                    "inverse-on-surface": "#565555",
+                    "on-primary-fixed": "#3a4a00",
+                    "secondary-fixed-dim": "#ddda49"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Manrope"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Manrope', sans-serif;
+        }
+        .hero-headline {
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+        }
+        .kinetic-border {
+            background: linear-gradient(90deg, rgba(202,253,0,0.1) 0%, rgba(202,253,0,0) 100%);
+        }
+    </style>
+</head>
+<body class="selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#0e0e0e]/60 backdrop-blur-xl bg-[#131313] shadow-[0_0_32px_rgba(255,255,255,0.04)] flex justify-between items-center px-8 py-4 max-w-full mx-auto">
+<div class="text-2xl font-black tracking-tighter text-white">RepFit</div>
+<div class="hidden md:flex items-center gap-8 font-['Inter'] font-bold uppercase tracking-wider text-sm">
+<a class="text-white/70 hover:text-white transition-colors" href="#">Features</a>
+<a class="text-white/70 hover:text-white transition-colors" href="#">Pricing</a>
+<a class="text-white/70 hover:text-white transition-colors" href="#">Case Studies</a>
+</div>
+<button class="bg-primary-fixed text-on-primary-fixed font-bold py-2 px-6 rounded-lg hover:scale-105 active:scale-95 transition-all duration-200">
+            Get Started
+        </button>
+</nav>
+<main class="pt-24 overflow-hidden">
+<!-- Hero Section -->
+<section class="relative min-h-[921px] flex flex-col items-center justify-center px-6 lg:px-24">
+<div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+<div class="space-y-8">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-container-high rounded-full border border-outline-variant/15">
+<span class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
+<span class="font-label text-[10px] uppercase tracking-widest text-primary-fixed">Performance First</span>
+</div>
+<h1 class="hero-headline font-headline font-black text-5xl md:text-7xl lg:text-8xl text-white">
+                        The Most Profitable 30 Seconds in Your Gym's Day.
+                    </h1>
+<p class="font-body text-xl text-on-surface-variant max-w-lg leading-relaxed">
+                        Turn your members' workout highs into a 24/7 sales engine. Rank #1 on Google, drive more walk-ins, and grow your MRR on autopilot—no ad spend required.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-4 pt-4">
+<button class="bg-primary-fixed text-on-primary-fixed px-8 py-4 rounded-lg font-bold text-lg hover:scale-105 transition-transform flex items-center justify-center gap-2">
+                            Start Growing My Gym
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<button class="bg-surface-container-high text-white px-8 py-4 rounded-lg font-bold text-lg border border-outline-variant/15 hover:bg-surface-bright transition-colors">
+                            Watch Demo
+                        </button>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -inset-4 bg-primary-fixed/10 blur-[100px] rounded-full opacity-50 group-hover:opacity-70 transition-opacity"></div>
+<div class="relative bg-surface-container rounded-xl p-4 border border-outline-variant/15 shadow-2xl">
+<img alt="RepFit Dashboard" class="rounded-lg shadow-inner grayscale-[0.2] contrast-125" data-alt="A high-fidelity UI mockup of a gym management dashboard on a dark background. The dashboard features a prominent 'Revenue Growth' line chart and a 'New Reviews' bar chart. The style is minimalist and high-performance, using a dark charcoal palette with vibrant lime green (#CCFF00) accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_ZF5bgD5_JT8YsXV5DG55X3hKjIHLb2LJXwUU2xCWJwSh80XZ48KTj1aiwq4jLN8ZNggC20oTf7upx6mWM0g_I99eOhZrJCCYKlYvfbXvWSPpbaUHilWFpKpvvMS4rlMwxTu0UYlFtcpvMTCz5jzv6LK_huFhZY1jCSU5bNDrAOyV4siTouYwSf9w02rDJpY1c1hOhcsu5K4_-H5vRggDdjgZ40Vd_Pv_7_OmUVhqQJ9TFsSTqgs-GrmKfdTav3rMYvoG_u_980I"/>
+<!-- Floating KPI Cards -->
+<div class="absolute -bottom-6 -left-6 bg-surface-container-highest p-6 rounded-lg border border-outline-variant/15 shadow-xl hidden md:block">
+<div class="text-primary-fixed text-4xl font-black font-headline">98%</div>
+<div class="text-xs uppercase tracking-widest font-label text-white/50">Retention Rate</div>
+</div>
+<div class="absolute -top-6 -right-6 bg-primary-fixed p-6 rounded-lg shadow-xl hidden md:block">
+<span class="material-symbols-outlined text-on-primary-fixed text-4xl" data-weight="fill">trending_up</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ROI Section -->
+<section class="py-32 px-6 lg:px-24 bg-surface-container-low">
+<div class="max-w-7xl mx-auto">
+<div class="flex flex-col md:flex-row justify-between items-end gap-8 mb-24">
+<div class="max-w-2xl">
+<h2 class="font-headline font-black text-4xl md:text-5xl text-white mb-6">Designed for Growth. Built for Performance.</h2>
+<p class="text-on-surface-variant font-body text-lg">We stripped away the complexity of traditional CRM systems to focus on the three pillars that actually move the needle for gym owners.</p>
+</div>
+<span class="font-label text-primary-fixed text-sm uppercase tracking-tighter border-b border-primary-fixed pb-2">ROI Focused / 01</span>
+</div>
+<div class="grid md:grid-cols-3 gap-8">
+<!-- Glassmorphic Card 1 -->
+<div class="group relative bg-surface-variant/60 backdrop-blur-xl p-10 rounded-lg border border-outline-variant/15 hover:bg-surface-bright/80 transition-all duration-300">
+<div class="w-12 h-12 bg-primary-fixed/10 rounded flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary-fixed text-3xl">search_check</span>
+</div>
+<h3 class="font-headline font-bold text-2xl text-white mb-4">Rank Higher.</h3>
+<p class="text-on-surface-variant leading-relaxed">Dominate local search results and be the first gym people see when they search for fitness in your city.</p>
+</div>
+<!-- Glassmorphic Card 2 -->
+<div class="group relative bg-surface-variant/60 backdrop-blur-xl p-10 rounded-lg border border-outline-variant/15 hover:bg-surface-bright/80 transition-all duration-300">
+<div class="w-12 h-12 bg-primary-fixed/10 rounded flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary-fixed text-3xl">verified</span>
+</div>
+<h3 class="font-headline font-bold text-2xl text-white mb-4">Get Chosen.</h3>
+<p class="text-on-surface-variant leading-relaxed">Show off stellar member reviews and build instant trust with prospects. RepFit automates social proof while it's hot.</p>
+</div>
+<!-- Glassmorphic Card 3 -->
+<div class="group relative bg-surface-variant/60 backdrop-blur-xl p-10 rounded-lg border border-outline-variant/15 hover:bg-surface-bright/80 transition-all duration-300">
+<div class="w-12 h-12 bg-primary-fixed/10 rounded flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary-fixed text-3xl">bolt</span>
+</div>
+<h3 class="font-headline font-bold text-2xl text-white mb-4">Close Faster.</h3>
+<p class="text-on-surface-variant leading-relaxed">Convert leads into loyal members with high-performance follow-up tools that feel like concierge service.</p>
+</div>
+</div>
+<div class="mt-24 text-center">
+<button class="bg-primary-fixed text-on-primary-fixed px-12 py-5 rounded-lg font-black text-xl uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(202,253,0,0.2)]">
+                        Start Growing My Gym
+                    </button>
+</div>
+</div>
+</section>
+<!-- Bento Grid Feature Highlight -->
+<section class="py-32 px-6 lg:px-24">
+<div class="max-w-7xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-6 min-h-[600px]">
+<div class="md:col-span-2 bg-surface-container rounded-lg p-10 flex flex-col justify-between border border-outline-variant/15">
+<div>
+<h4 class="font-headline font-bold text-3xl mb-4">Real-Time Growth Analytics</h4>
+<p class="text-on-surface-variant">See every dollar and review as it comes in. No more guessing what works.</p>
+</div>
+<div class="pt-8">
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-fixed w-3/4"></div>
+</div>
+<div class="flex justify-between mt-2 text-[10px] uppercase font-label tracking-widest text-on-surface-variant">
+<span>Current Target</span>
+<span class="text-primary-fixed">75% Complete</span>
+</div>
+</div>
+</div>
+<div class="md:col-span-2 bg-surface-container-high rounded-lg overflow-hidden border border-outline-variant/15 relative">
+<img alt="Gym Performance" class="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" data-alt="dramatic wide shot of a luxury gym interior with dark concrete floors, industrial lighting, and premium equipment in shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVsH_ymh9UMG7s57zaQZaP2nqzffLuR8HFpRrm2gU0amwCG7508tQw9raTRZ6K4pI0qX5x4ewx3sunPZyzb0P7BDlHZXFkAWV4tmwcQV8ZHoMRvU5crpzNb9JsSj9ncO95iN8miCBEUu7RRBA3VwUyqrhyLBOmPFQDff5qLHHe2kKUG_a-FCoKOtTyvB3e6as82koRCpKknMYX_91dxU__DK09-HAxP6pE_gGQbdU27purtxPVIqxR0QsCox2143CW_Dv0LeU_pgs"/>
+<div class="relative z-10 p-10 h-full flex flex-col justify-end bg-gradient-to-t from-surface-dim to-transparent">
+<h4 class="font-headline font-bold text-3xl mb-2">Automated Outreach</h4>
+<p class="text-on-surface-variant">Engage leads before they cool down.</p>
+</div>
+</div>
+<div class="bg-surface-container rounded-lg p-8 border border-outline-variant/15 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary-fixed text-5xl mb-4" data-weight="fill">star</span>
+<div class="text-2xl font-black font-headline">500+</div>
+<p class="text-xs font-label uppercase text-on-surface-variant">Gyms Thriving</p>
+</div>
+<div class="bg-surface-container rounded-lg p-8 border border-outline-variant/15 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-primary-fixed text-5xl mb-4">rocket_launch</span>
+<div class="text-2xl font-black font-headline">12x</div>
+<p class="text-xs font-label uppercase text-on-surface-variant">Avg ROI</p>
+</div>
+<div class="md:col-span-2 bg-surface-container rounded-lg p-10 border border-outline-variant/15 flex items-center gap-8">
+<div class="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img alt="Gym Owner" class="w-full h-full object-cover" data-alt="portrait of a professional athletic gym owner smiling confidently in high-end fitness attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpG6lWY_9odSfppumJqdHl2eVJoaeXoMNeQ7wZ0cDyqxBRB2lfTft55MGllWHpqfOiJcYLMPfhN9HMVnhAvsCuAzvQwPcLVtyy00q_V6PdOEjH0j-Y9Ip1QfzSw_lYc6oD3sFFeJKUpOfGnq3MhYlqJc5pr3SBIZIsPMZUJ-uC5Dvr4tlyJ2ZrmLxRL3I_kwrEpZITjtFZwGeeJ4azQ38jMdETk9_Ok4BG-uIGhx8FqgGhU4IBwnG7wmMPPh74U6xSO69w1Z7KKsA"/>
+</div>
+<div>
+<p class="italic text-lg text-white mb-2">"RepFit is the single most important tool in my tech stack."</p>
+<p class="font-label uppercase text-xs tracking-widest text-primary-fixed">Alex Rivers, Iron Haven Gym</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#0e0e0e] w-full py-12 px-8 bg-[#131313]">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="text-xl font-black text-white">RepFit</div>
+<div class="flex gap-8 font-['Manrope'] text-xs text-white/50">
+<a class="text-white/40 hover:text-white hover:text-[#cafd00] transition-colors" href="#">Privacy Policy</a>
+<a class="text-white/40 hover:text-white hover:text-[#cafd00] transition-colors" href="#">Terms of Service</a>
+<a class="text-white/40 hover:text-white hover:text-[#cafd00] transition-colors" href="#">Contact</a>
+<a class="text-white/40 hover:text-white hover:text-[#cafd00] transition-colors" href="#">Instagram</a>
+<a class="text-white/40 hover:text-white hover:text-[#cafd00] transition-colors" href="#">LinkedIn</a>
+</div>
+<div class="font-['Manrope'] text-xs text-white/50">
+                © 2024 RepFit. Performance First.
+            </div>
+</div>
+</footer>
+</body></html>

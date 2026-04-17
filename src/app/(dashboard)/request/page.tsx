@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { PremiumButton } from "@/components/ui/PremiumButton";
 import {
   Send,
@@ -23,10 +24,12 @@ import {
 
 export default function ReviewRequestPage() {
   const [mode, setMode] = useState<"single" | "bulk">("bulk");
+  const { userId } = useAuth();
 
   // Single Request State
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [aiContextSingle, setAiContextSingle] = useState("");
 
   // Bulk Request State
@@ -155,24 +158,30 @@ export default function ReviewRequestPage() {
 
   const handleLaunchCampaign = async () => {
     if (aiMessages.length === 0) return;
+
+    if (!userId) {
+      alert("Auth Error: Clerk lost your session. Please refresh the page.");
+      return;
+    }
+
     setIsSaving(true);
-    // Using a dummy Gym Owner ID for now, since auth is not fully hooked up
-    const gymOwnerId = "gym-owner-dummy-id";
     try {
       const res = await saveCampaign(
-        gymOwnerId,
+        userId,
         generationMode === "AI Assist"
           ? aiContextBulk
           : "Manual Template used.",
         aiMessages,
       );
+
       if (res.success) {
         setSuccess(true);
       } else {
-        alert("Failed to save campaign");
+        alert("Failed to save campaign to database.");
       }
     } catch (e) {
       console.error("Launch error:", e);
+      alert("A critical error occurred while launching.");
     } finally {
       setIsSaving(false);
     }
@@ -269,7 +278,7 @@ export default function ReviewRequestPage() {
           {mode === "single" ? (
             /* --- SINGLE REQUEST VIEW --- */
             <section className="bg-[#131313] p-10 rounded-[4px]">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                 <div className="flex flex-col gap-2">
                   <label
                     className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
@@ -299,6 +308,22 @@ export default function ReviewRequestPage() {
                     onChange={(e) => setPhone(e.target.value)}
                     className="bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-4 text-lg font-medium text-[#ffffff] placeholder:text-white/10 transition-all focus:border-[#f3ffca] focus:ring-0 focus:shadow-[0_4px_12px_-4px_rgba(202,253,0,0.2)] font-sans"
                     placeholder="+1 (555) 000-0000"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label
+                    className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
+                    style={{ fontFamily: "var(--font-inter), sans-serif" }}
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-4 text-lg font-medium text-[#ffffff] placeholder:text-white/10 transition-all focus:border-[#f3ffca] focus:ring-0 focus:shadow-[0_4px_12px_-4px_rgba(202,253,0,0.2)] font-sans"
+                    placeholder="marcus@rome.com"
                   />
                 </div>
               </div>
@@ -585,6 +610,13 @@ export default function ReviewRequestPage() {
                   </span>
                 </div>
 
+                {/* Table Header */}
+                <div className="hidden md:flex flex-row px-4 pb-2 border-b border-[#484847]/30 mb-4 items-center">
+                  <div className="w-1/4 text-[10px] font-bold text-[#adaaaa] uppercase tracking-widest font-sans">Customer</div>
+                  <div className="w-1/4 text-[10px] font-bold text-[#adaaaa] uppercase tracking-widest font-sans pl-2">Email</div>
+                  <div className="w-2/4 text-[10px] font-bold text-[#adaaaa] uppercase tracking-widest font-sans pl-8">Message</div>
+                </div>
+
                 <div className="flex flex-col space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                   {aiMessages.length > 0 ? (
                     aiMessages.map((row, idx) => (
@@ -593,18 +625,23 @@ export default function ReviewRequestPage() {
                         onClick={() => setSelectedCustomerIndex(idx)}
                         className={`flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-[#262626] rounded-[4px] border border-[#484847]/30 cursor-pointer transition-colors ${selectedCustomerIndex === idx ? "!border-[#cafd00] bg-[#2e2e2e]" : ""}`}
                       >
-                        <div className="flex items-center gap-[16px] w-full md:w-1/3 mb-2 md:mb-0">
+                        <div className="flex items-center gap-[16px] w-full md:w-1/4 mb-2 md:mb-0">
                           <User size={16} className="text-[#adaaaa]" />
                           <div className="flex flex-col">
                             <span className="text-sm font-bold text-[#ffffff] font-sans">
                               {row.customer.name}
                             </span>
                             <span className="text-[10px] text-[#adaaaa] font-sans">
-                              {row.customer.phone || row.customer.email}
+                              {row.customer.phone || "—"}
                             </span>
                           </div>
                         </div>
-                        <div className="w-full md:w-2/3 md:pl-8">
+                        <div className="w-full md:w-1/4 md:pl-2 mb-2 md:mb-0">
+                          <span className="text-sm text-[#ffffff] font-sans opacity-80 overflow-hidden text-ellipsis whitespace-nowrap block">
+                            {row.customer.email || "—"}
+                          </span>
+                        </div>
+                        <div className="w-full md:w-2/4 md:pl-8">
                           <textarea
                             className="w-full text-[12px] text-[#ffffff] bg-transparent border-0 border-l-2 border-[#484847]/30 pl-4 py-1 resize-none focus:outline-none focus:ring-0 focus:border-[#cafd00] font-sans italic custom-scrollbar"
                             value={row.message}
@@ -623,18 +660,23 @@ export default function ReviewRequestPage() {
                         onClick={() => setSelectedCustomerIndex(idx)}
                         className={`flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-[#262626] rounded-[4px] border border-[#484847]/30 cursor-pointer transition-colors ${selectedCustomerIndex === idx ? "!border-[#cafd00] bg-[#2e2e2e]" : ""}`}
                       >
-                        <div className="flex items-center gap-[16px] w-full md:w-1/3 mb-2 md:mb-0">
+                        <div className="flex items-center gap-[16px] w-full md:w-1/4 mb-2 md:mb-0">
                           <User size={16} className="text-[#adaaaa]" />
                           <div className="flex flex-col">
                             <span className="text-sm font-bold text-[#ffffff] font-sans">
                               {row.name}
                             </span>
                             <span className="text-[10px] text-[#adaaaa] font-sans">
-                              {row.phone || row.email}
+                              {row.phone || "—"}
                             </span>
                           </div>
                         </div>
-                        <div className="w-full md:w-2/3 md:pl-8">
+                        <div className="w-full md:w-1/4 md:pl-2 mb-2 md:mb-0">
+                          <span className="text-sm text-[#ffffff] font-sans opacity-80 overflow-hidden text-ellipsis whitespace-nowrap block">
+                            {row.email || "—"}
+                          </span>
+                        </div>
+                        <div className="w-full md:w-2/4 md:pl-8">
                           <p className="text-[12px] text-[#adaaaa] font-sans italic border-l border-[#484847]/30 pl-4">
                             {generationMode === "Manual Template"
                               ? manualTemplate

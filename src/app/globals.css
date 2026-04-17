@@ -18,9 +18,11 @@
 
   --color-outline: #767575;
   --color-outline-variant: #484847;
+  --color-on-surface-variant: #adaaaa;
 
   --font-sans: var(--font-manrope);
   --font-display: var(--font-inter);
+  --font-label: var(--font-inter);
   
   --radius-sm: 4px;
 }

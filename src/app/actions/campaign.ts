@@ -1,8 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { currentUser } from "@clerk/nextjs/server";
 import Papa from "papaparse";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { sendSms, sendEmail } from "@/lib/delivery";
 
 const apiKey = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -144,8 +146,31 @@ export async function saveCampaign(
   messagesData: CustomerMessage[],
 ) {
   try {
+    // 1. Securely fetch the real user details from Clerk
+    const user = await currentUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: No Clerk user found." };
+    }
+
+    // Extract their primary email and full name
+    const primaryEmail =
+      user.emailAddresses[0]?.emailAddress || "unknown@example.com";
+    const fullName =
+      `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Gym Owner";
+
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create a new Campaign
+      // 2. Upsert the GymOwner before doing anything else
+      await tx.gymOwner.upsert({
+        where: { id: gymOwnerId },
+        update: {},
+        create: {
+          id: gymOwnerId,
+          name: fullName,
+          email: primaryEmail,
+        },
+      });
+
+      // 3. Create a new Campaign
       const campaign = await tx.campaign.create({
         data: {
           gymOwnerId,
@@ -155,14 +180,14 @@ export async function saveCampaign(
         },
       });
 
-      // 2. Upsert Customer records & Create Review Requests
+      // 4. Upsert Customer records & Create Review Requests
       for (const data of messagesData) {
-        // Look up the customer by phone OR email
+        // FIXED: Using "phone" instead of "phoneNumber" to match your Prisma schema
         let customer = await tx.customer.findFirst({
           where: {
             gymOwnerId: gymOwnerId,
             OR: [
-              { phoneNumber: data.customer.phone || "___NO_PHONE___" },
+              { phone: data.customer.phone || "___NO_PHONE___" },
               { email: data.customer.email || "___NO_EMAIL___" },
             ],
           },
@@ -172,7 +197,7 @@ export async function saveCampaign(
           customer = await tx.customer.create({
             data: {
               name: data.customer.name,
-              phoneNumber: data.customer.phone || null,
+              phone: data.customer.phone || null, // FIXED
               email: data.customer.email || null,
               gymOwnerId: gymOwnerId,
             },
@@ -181,7 +206,6 @@ export async function saveCampaign(
           customer.name !== data.customer.name ||
           (!customer.email && data.customer.email)
         ) {
-          // Update customer if they have a new name or a newly added email
           customer = await tx.customer.update({
             where: { id: customer.id },
             data: {
@@ -193,7 +217,7 @@ export async function saveCampaign(
           });
         }
 
-        // 3. Create ReviewRequest linked to Campaign and Customer
+        // 5. Create ReviewRequest linked to Campaign and Customer
         await tx.reviewRequest.create({
           data: {
             customerId: customer.id,
@@ -203,6 +227,20 @@ export async function saveCampaign(
             status: "PENDING",
           },
         });
+
+        // 6. THE DELIVERY INJECTION: Actually send the message
+        // Prioritize SMS if they have a phone number, fallback to Email
+        if (data.customer.phone) {
+          // Note: In a real production app, we wouldn't await this inside the DB transaction
+          // to avoid slowing down the save, but for MVP strict reliability, this is perfect.
+          await sendSms(data.customer.phone, data.message);
+        } else if (data.customer.email) {
+          await sendEmail(
+            data.customer.email,
+            "Checking in on your fitness goals!",
+            data.message,
+          );
+        }
       }
 
       return campaign;
