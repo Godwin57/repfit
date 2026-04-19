@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Instagram, Linkedin, Mail } from "lucide-react";
 
 export function LandingFooter() {
   return (
@@ -26,21 +25,18 @@ export function LandingFooter() {
             href="#"
             className="text-white/40 hover:text-primary transition-colors flex items-center gap-1.5"
           >
-            <Mail className="w-3.5 h-3.5" />
             Contact
           </Link>
           <Link
             href="#"
             className="text-white/40 hover:text-primary transition-colors flex items-center gap-1.5"
           >
-            <Instagram className="w-3.5 h-3.5" />
             Instagram
           </Link>
           <Link
             href="#"
             className="text-white/40 hover:text-primary transition-colors flex items-center gap-1.5"
           >
-            <Linkedin className="w-3.5 h-3.5" />
             LinkedIn
           </Link>
         </div>
