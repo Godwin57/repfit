@@ -1,13 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// Define which routes do NOT require authentication.
-// The (.*) ensures any sub-paths of sign-in/sign-up are also public.
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
+// Define the routes that do NOT require authentication
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/cron/process-queue", // Make sure your cron job stays accessible!
+]);
 
-export default clerkMiddleware(async (auth, request) => {
-  // If the user is trying to access ANY route that isn't public, protect it.
+export default clerkMiddleware((auth, request) => {
   if (!isPublicRoute(request)) {
-    await auth.protect();
+    auth().protect();
   }
 });
 
