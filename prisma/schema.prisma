@@ -13,6 +13,7 @@ model GymOwner {
   email           String   @unique
   googlePlaceId   String?
   defaultAiPrompt String?
+  googleReviewLink  String?
   createdAt       DateTime @default(now())
 
   customers       Customer[]
