@@ -23,7 +23,7 @@ export function Sidebar() {
 
       <nav className="flex-1 px-4 space-y-2 mt-4">
         {[
-          { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+          { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
           { icon: Target, label: "Campaigns", href: "/request" },
           { icon: MessageSquareText, label: "Reviews", href: "/reviews" },
         ].map((item) => (
