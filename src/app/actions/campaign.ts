@@ -82,15 +82,45 @@ export async function processCsvUpload(
  * Accepts an array of customers and the "AI Message Context" string.
  * Prompts Gemini API to generate a personalized message.
  */
+/**
+ * Accepts an array of customers, the "AI Message Context", and an optional gymOwnerId.
+ * Prompts Gemini API to generate a personalized message containing the real review link.
+ */
+/**
+ * Accepts an array of customers, the "AI Message Context", and an optional gymOwnerId.
+ * Prompts Gemini API to generate a personalized message containing the real review link.
+ * Includes Automatic Retries for production reliability.
+ */
 export async function generateAiMessages(
   customers: CustomerData[],
   context: string,
+  gymOwnerId?: string,
 ): Promise<CustomerMessage[]> {
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
     generationConfig: { responseMimeType: "application/json" },
   });
 
+  // 1. Securely fetch the Review Link
+  let ownerId = gymOwnerId;
+  if (!ownerId) {
+    const user = await currentUser();
+    if (user) ownerId = user.id;
+  }
+
+  let reviewLink = "";
+  if (ownerId) {
+    const owner = await prisma.gymOwner.findUnique({
+      where: { id: ownerId },
+      select: { googleReviewLink: true },
+    });
+    if (owner?.googleReviewLink) {
+      reviewLink = owner.googleReviewLink;
+    }
+  }
+
+  const finalLink =
+    reviewLink || "https://search.google.com/local/writereview?placeid=YOUR_ID";
   const customerListJson = JSON.stringify(customers);
 
   const prompt = `
@@ -100,41 +130,55 @@ export async function generateAiMessages(
     Here is a JSON list of customers:
     ${customerListJson}
 
-    Your task: Write a short, highly engaging, personalized message for EACH customer based on the context. Ensure you include the placeholder [REVIEW_LINK] if asking for a review.
+    Your task: Write a short, highly engaging, personalized message for EACH customer based on the context. 
+    You MUST include this exact review link in your message: ${finalLink}
+    Do NOT use placeholders like [REVIEW_LINK]. Inject the real link naturally into the message.
     
     You MUST return a raw JSON array of objects. Each object must have the exact "name" of the customer and the generated "message". 
-    Example format:
-    [
-      { "name": "John Doe", "message": "Hey John, coach Sarah here..." }
-    ]
   `;
 
-  try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
+  // --- NEW: THE EXPONENTIAL BACKOFF RETRY LOOP ---
+  const MAX_RETRIES = 3;
 
-    const aiResponses = JSON.parse(text) as {
-      name: string;
-      message: string;
-    }[];
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await model.generateContent(prompt);
+      const text = result.response.text().trim();
 
-    const finalMessages: CustomerMessage[] = customers.map((customer) => {
-      // Find the matching AI generated message by Name to accommodate email-only users
-      const match = aiResponses.find((r) => r.name === customer.name);
+      const aiResponses = JSON.parse(text) as {
+        name: string;
+        message: string;
+      }[];
 
-      return {
-        customer,
-        message: match
-          ? match.message
-          : `Hey ${customer.name}, checking in from RepFit! How are your workouts going? [REVIEW_LINK]`,
-      };
-    });
+      const finalMessages: CustomerMessage[] = customers.map((customer) => {
+        const match = aiResponses.find((r) => r.name === customer.name);
+        return {
+          customer,
+          message: match
+            ? match.message
+            : `Hey ${customer.name}, checking in from RepFit! How are your workouts going? ${finalLink}`,
+        };
+      });
 
-    return finalMessages;
-  } catch (error) {
-    console.error("AI Batch Generation Error:", error);
-    throw new Error("Failed to generate batch messages. Check server logs.");
+      return finalMessages; // Success! Return the messages and exit the loop.
+    } catch (error) {
+      console.warn(`[GEMINI WARNING] Attempt ${attempt} failed:`, error);
+
+      if (attempt === MAX_RETRIES) {
+        console.error("[GEMINI ERROR] All retry attempts failed.");
+        throw new Error(
+          "Failed to generate batch messages after multiple attempts.",
+        );
+      }
+
+      // Wait before retrying (1s, then 2s, then 4s)
+      const waitTime = Math.pow(2, attempt - 1) * 1000;
+      console.log(`Waiting ${waitTime}ms before retrying...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
   }
+
+  return []; // Fallback (should never technically hit this)
 }
 
 /**

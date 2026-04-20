@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { PremiumButton } from "@/components/ui/PremiumButton";
 import {
@@ -13,6 +13,7 @@ import {
   Mail,
   MessageSquare,
   AlertCircle,
+  Building, // NEW: Icon for the read-only profile badge
 } from "lucide-react";
 import {
   processCsvUpload,
@@ -21,10 +22,17 @@ import {
   CustomerData,
   CustomerMessage,
 } from "@/app/actions/campaign";
+import { getGymSettings } from "@/app/actions/settings"; // NEW: Fetching the global settings
 
 export default function ReviewRequestPage() {
   const [mode, setMode] = useState<"single" | "bulk">("bulk");
   const { userId } = useAuth();
+
+  // Settings State
+  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
+  const [senderName, setSenderName] = useState("");
+  const [businessName, setBusinessName] = useState("");
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -39,8 +47,7 @@ export default function ReviewRequestPage() {
 
   const [isSmsEnabled, setIsSmsEnabled] = useState(true);
   const [isEmailEnabled, setIsEmailEnabled] = useState(false);
-  const [senderName, setSenderName] = useState("Sarah");
-  const [businessName, setBusinessName] = useState("RepFit");
+
   const [generationMode, setGenerationMode] = useState<
     "AI Assist" | "Manual Template"
   >("AI Assist");
@@ -52,6 +59,28 @@ export default function ReviewRequestPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // NEW: Fetch settings on load
+  useEffect(() => {
+    async function loadSettings() {
+      if (!userId) return;
+      const res = await getGymSettings(userId);
+      if (
+        res.success &&
+        res.settings &&
+        res.settings.senderName &&
+        res.settings.businessName
+      ) {
+        setSenderName(res.settings.senderName);
+        setBusinessName(res.settings.businessName);
+        setIsProfileComplete(true);
+      } else {
+        setIsProfileComplete(false);
+      }
+      setIsSettingsLoading(false);
+    }
+    loadSettings();
+  }, [userId]);
 
   const processFile = (file: File) => {
     const reader = new FileReader();
@@ -108,10 +137,7 @@ export default function ReviewRequestPage() {
           .replace(/{Sender}/g, senderName)
           .replace(/{Gym}/g, businessName);
 
-        return {
-          customer: data,
-          message: msg,
-        };
+        return { customer: data, message: msg };
       });
       setAiMessages(newMessages);
     } else {
@@ -141,18 +167,15 @@ export default function ReviewRequestPage() {
     });
   };
 
-  const insertPlaceholder = (placeholder: string) => {
+  const insertPlaceholder = (placeholder: string) =>
     setManualTemplate((prev) => prev + placeholder);
-  };
 
   const handleLaunchCampaign = async () => {
     if (aiMessages.length === 0) return;
-
     if (!userId) {
       alert("Auth Error: Clerk lost your session. Please refresh the page.");
       return;
     }
-
     setIsSaving(true);
     try {
       const res = await saveCampaign(
@@ -162,7 +185,6 @@ export default function ReviewRequestPage() {
           : "Manual Template used.",
         aiMessages,
       );
-
       if (res.success) {
         setSuccess(true);
       } else {
@@ -175,6 +197,44 @@ export default function ReviewRequestPage() {
       setIsSaving(false);
     }
   };
+
+  // Prevent accessing the tool if profile is incomplete
+  if (isSettingsLoading) {
+    return (
+      <div className="flex h-full items-center justify-center text-[#adaaaa] min-h-[600px]">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isProfileComplete) {
+    return (
+      <div className="flex flex-col w-full h-full max-w-7xl mx-auto pb-[24px] items-center justify-center min-h-[600px] px-4">
+        <div className="text-center bg-[#131313] p-8 md:p-16 rounded-[4px] border border-[#ff3333]/30 shadow-2xl relative overflow-hidden w-full max-w-2xl">
+          <AlertCircle className="w-16 h-16 md:w-20 md:h-20 text-[#ff3333] mx-auto mb-6 relative z-10" />
+          <h2
+            className="text-3xl md:text-4xl font-black tracking-tighter text-[#ffffff] mb-4 relative z-10"
+            style={{ fontFamily: "var(--font-inter), sans-serif" }}
+          >
+            Profile Incomplete
+          </h2>
+          <p className="text-[#adaaaa] mb-10 text-base md:text-lg font-sans relative z-10">
+            Before launching a campaign, you must configure your Business Name
+            and Sender Details in your settings.
+          </p>
+          <div className="relative z-10 w-full md:w-fit mx-auto">
+            {/* You can change this button to use a Next.js <Link> to your settings page if you prefer! */}
+            <PremiumButton
+              onClick={() => (window.location.href = "/settings")}
+              className="w-full md:w-auto"
+            >
+              Go to Settings
+            </PremiumButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -189,7 +249,7 @@ export default function ReviewRequestPage() {
             Campaign Launched!
           </h2>
           <p className="text-[#adaaaa] mb-10 text-base md:text-lg font-sans relative z-10">
-            Your campaign is now running and securely saved.
+            Your campaign is securely queued and will run autonomously.
           </p>
           <div className="relative z-10 w-full md:w-fit mx-auto">
             <PremiumButton
@@ -228,7 +288,6 @@ export default function ReviewRequestPage() {
         </div>
       </div>
 
-      {/* FIXED: Added flex-wrap so the header elements flow naturally instead of squishing */}
       <header className="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-8 md:mb-16 gap-6 flex-wrap">
         <div className="min-w-0">
           <span className="text-[10px] text-[#cafd00] uppercase tracking-[0.2em] font-sans mb-2 block font-bold">
@@ -260,7 +319,6 @@ export default function ReviewRequestPage() {
         </div>
       </header>
 
-      {/* FIXED: Shifted breakpoint from lg (1024px) to xl (1280px) to account for the Sidebar */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 md:gap-12">
         <div className="xl:col-span-7 flex flex-col gap-8 md:gap-12 min-w-0">
           {mode === "single" ? (
@@ -273,7 +331,6 @@ export default function ReviewRequestPage() {
                   >
                     Customer Name
                   </label>
-                  {/* FIXED: Added w-full so inputs don't break flex layout */}
                   <input
                     type="text"
                     value={name}
@@ -282,7 +339,6 @@ export default function ReviewRequestPage() {
                     placeholder="e.g. Marcus Aurelius"
                   />
                 </div>
-
                 <div className="flex flex-col gap-2 min-w-0">
                   <label
                     className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
@@ -298,7 +354,6 @@ export default function ReviewRequestPage() {
                     placeholder="+1 (555) 000-0000"
                   />
                 </div>
-
                 <div className="flex flex-col gap-2 sm:col-span-2 min-w-0">
                   <label
                     className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
@@ -315,7 +370,6 @@ export default function ReviewRequestPage() {
                   />
                 </div>
               </div>
-
               <div className="mt-8 md:mt-12 flex flex-col gap-2 min-w-0">
                 <label
                   className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
@@ -331,14 +385,12 @@ export default function ReviewRequestPage() {
                   rows={3}
                 ></textarea>
               </div>
-
               <div className="mt-8 md:mt-12 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <button
                   className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-[#262626] text-[#ffffff] text-sm font-bold rounded-[4px] border border-[#484847]/15 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 shrink-0"
                   style={{ fontFamily: "var(--font-inter), sans-serif" }}
                 >
-                  <Sparkles size={16} />
-                  Generate Draft
+                  <Sparkles size={16} /> Generate Draft
                 </button>
                 <PremiumButton
                   className="w-full sm:w-auto px-8 md:px-12 uppercase tracking-tighter shrink-0"
@@ -355,9 +407,7 @@ export default function ReviewRequestPage() {
                 onDrop={(e) => {
                   e.preventDefault();
                   const file = e.dataTransfer.files?.[0];
-                  if (file) {
-                    processFile(file);
-                  }
+                  if (file) processFile(file);
                 }}
                 className="bg-[#131313] p-6 md:p-8 rounded-[4px] border-2 border-dashed border-[#484847]/30 flex flex-col items-center justify-center text-center group hover:bg-[#1a1a1a] transition-all cursor-pointer min-h-[160px] md:min-h-[200px] h-auto"
               >
@@ -381,12 +431,9 @@ export default function ReviewRequestPage() {
                     "Upload Another CSV"
                   ) : (
                     <>
-                      {/* Hidden on mobile/tablet, shows on desktop */}
                       <span className="hidden lg:inline">Drag & Drop CSV</span>
-
-                      {/* Shows on mobile/tablet, hidden on desktop */}
                       <span className="inline lg:hidden leading-snug">
-                        Tap to upload CSV file
+                        Click here to upload CSV
                       </span>
                     </>
                   )}
@@ -399,101 +446,96 @@ export default function ReviewRequestPage() {
               </label>
 
               <div className="bg-[#131313] p-5 md:p-10 rounded-[4px] flex flex-col gap-6 md:gap-8 min-w-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 min-w-0">
-                  <div className="flex flex-col gap-2 min-w-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
+                  {/* NEW: Read-Only Identity Badge replacing the inputs */}
+                  <div className="flex flex-col gap-2">
                     <label
                       className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
                       style={{ fontFamily: "var(--font-inter), sans-serif" }}
                     >
-                      Sender Name
+                      Active Profile
                     </label>
-                    <input
-                      type="text"
-                      value={senderName}
-                      onChange={(e) => setSenderName(e.target.value)}
-                      className="w-full bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-3 md:py-4 text-base md:text-lg font-medium text-[#ffffff] placeholder:text-white/10 transition-all focus:border-[#f3ffca] focus:ring-0 font-sans"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2 min-w-0">
-                    <label
-                      className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
-                      style={{ fontFamily: "var(--font-inter), sans-serif" }}
-                    >
-                      Business Name
-                    </label>
-                    <input
-                      type="text"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      className="w-full bg-[#0e0e0e] border-0 border-b border-[#484847]/30 py-3 md:py-4 text-base md:text-lg font-medium text-[#ffffff] placeholder:text-white/10 transition-all focus:border-[#f3ffca] focus:ring-0 font-sans"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4 min-w-0">
-                  <label
-                    className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
-                    style={{ fontFamily: "var(--font-inter), sans-serif" }}
-                  >
-                    Active Channels
-                  </label>
-                  {/* FIXED: flex-wrap to stop pills from overlapping */}
-                  <div className="flex flex-wrap gap-6 md:gap-8">
-                    <div
-                      className="flex items-center gap-3 cursor-pointer group shrink-0"
-                      onClick={handleToggleEmail}
-                    >
-                      <div
-                        className={`w-10 md:w-12 h-5 md:h-6 rounded-full transition-colors flex items-center px-1 ${isEmailEnabled ? "bg-[#cafd00]" : "bg-[#484847]/50"}`}
-                      >
-                        <div
-                          className={`w-3.5 md:w-4 h-3.5 md:h-4 bg-white rounded-full transition-transform ${isEmailEnabled ? "translate-x-5 md:translate-x-6" : "translate-x-0"}`}
-                        />
+                    <div className="bg-[#0e0e0e] border border-[#484847]/30 rounded-[4px] px-4 py-3 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#262626] flex items-center justify-center shrink-0">
+                        <Building size={14} className="text-[#cafd00]" />
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Mail
-                          size={16}
-                          className={
-                            isEmailEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"
-                          }
-                        />
-                        <span
-                          className={`text-sm font-bold ${isEmailEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"}`}
-                          style={{
-                            fontFamily: "var(--font-inter), sans-serif",
-                          }}
-                        >
-                          Email
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-bold text-white truncate">
+                          {businessName}
+                        </span>
+                        <span className="text-xs text-[#adaaaa] truncate">
+                          Sending as {senderName}
                         </span>
                       </div>
                     </div>
+                  </div>
 
-                    <div
-                      className="flex items-center gap-3 cursor-pointer group shrink-0"
-                      onClick={handleToggleSms}
+                  {/* Active Channels Box */}
+                  <div className="flex flex-col gap-4 min-w-0 md:pl-8 md:border-l md:border-[#484847]/30">
+                    <label
+                      className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
+                      style={{ fontFamily: "var(--font-inter), sans-serif" }}
                     >
+                      Active Channels
+                    </label>
+                    <div className="flex flex-wrap gap-6">
                       <div
-                        className={`w-10 md:w-12 h-5 md:h-6 rounded-full transition-colors flex items-center px-1 ${isSmsEnabled ? "bg-[#cafd00]" : "bg-[#484847]/50"}`}
+                        className="flex items-center gap-3 cursor-pointer group shrink-0"
+                        onClick={handleToggleEmail}
                       >
                         <div
-                          className={`w-3.5 md:w-4 h-3.5 md:h-4 bg-white rounded-full transition-transform ${isSmsEnabled ? "translate-x-5 md:translate-x-6" : "translate-x-0"}`}
-                        />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <MessageSquare
-                          size={16}
-                          className={
-                            isSmsEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"
-                          }
-                        />
-                        <span
-                          className={`text-sm font-bold ${isSmsEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"}`}
-                          style={{
-                            fontFamily: "var(--font-inter), sans-serif",
-                          }}
+                          className={`w-10 md:w-12 h-5 md:h-6 rounded-full transition-colors flex items-center px-1 ${isEmailEnabled ? "bg-[#cafd00]" : "bg-[#484847]/50"}`}
                         >
-                          SMS
-                        </span>
+                          <div
+                            className={`w-3.5 md:w-4 h-3.5 md:h-4 bg-white rounded-full transition-transform ${isEmailEnabled ? "translate-x-5 md:translate-x-6" : "translate-x-0"}`}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Mail
+                            size={16}
+                            className={
+                              isEmailEnabled
+                                ? "text-[#ffffff]"
+                                : "text-[#adaaaa]"
+                            }
+                          />
+                          <span
+                            className={`text-sm font-bold ${isEmailEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"}`}
+                            style={{
+                              fontFamily: "var(--font-inter), sans-serif",
+                            }}
+                          >
+                            Email
+                          </span>
+                        </div>
+                      </div>
+                      <div
+                        className="flex items-center gap-3 cursor-pointer group shrink-0"
+                        onClick={handleToggleSms}
+                      >
+                        <div
+                          className={`w-10 md:w-12 h-5 md:h-6 rounded-full transition-colors flex items-center px-1 ${isSmsEnabled ? "bg-[#cafd00]" : "bg-[#484847]/50"}`}
+                        >
+                          <div
+                            className={`w-3.5 md:w-4 h-3.5 md:h-4 bg-white rounded-full transition-transform ${isSmsEnabled ? "translate-x-5 md:translate-x-6" : "translate-x-0"}`}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <MessageSquare
+                            size={16}
+                            className={
+                              isSmsEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"
+                            }
+                          />
+                          <span
+                            className={`text-sm font-bold ${isSmsEnabled ? "text-[#ffffff]" : "text-[#adaaaa]"}`}
+                            style={{
+                              fontFamily: "var(--font-inter), sans-serif",
+                            }}
+                          >
+                            SMS
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

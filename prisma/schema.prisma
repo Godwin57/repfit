@@ -14,6 +14,9 @@ model GymOwner {
   googlePlaceId   String?
   defaultAiPrompt String?
   googleReviewLink  String?
+  timezone         String   @default("UTC")
+  senderName       String? 
+  businessName     String?
   createdAt       DateTime @default(now())
 
   customers       Customer[]
