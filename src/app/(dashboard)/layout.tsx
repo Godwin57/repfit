@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Sidebar } from "@/components/Sidebar";
+import Link from "next/link";
 
 export default function DashboardLayout({
   children,
@@ -26,9 +27,11 @@ export default function DashboardLayout({
         }`}
       >
         <div className="md:hidden flex items-center justify-between p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-low)]">
-          <span className="font-bold text-lg text-[var(--color-primary)]">
-            RepFit
-          </span>
+          <Link href={"/"}>
+            <span className="font-bold text-lg text-[var(--color-primary)]">
+              RepFit
+            </span>
+          </Link>
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="text-[var(--color-on-surface-variant)] hover:text-white"
@@ -55,7 +58,7 @@ export default function DashboardLayout({
       </aside>
 
       <main className="flex-1 overflow-y-auto relative flex flex-col">
-        <header className="md:hidden flex items-center justify-between p-4 bg-[var(--color-surface-low)] border-b border-[var(--color-outline-variant)]">
+        <header className="md:hidden flex items-center justify-between p-4 border-b border-[var(--color-outline-variant)] sticky top-0 z-10 bg-[#131313]/70 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -75,7 +78,9 @@ export default function DashboardLayout({
                 />
               </svg>
             </button>
-            <div className="font-bold text-lg text-white">RepFit</div>
+            <Link href="/">
+              <div className="font-bold text-lg text-white">RepFit</div>
+            </Link>
           </div>
           <UserButton afterSignOutUrl="/" />
         </header>
