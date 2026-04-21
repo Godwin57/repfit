@@ -82,11 +82,11 @@ export default function DashboardLayout({
               <div className="font-bold text-lg text-white">RepFit</div>
             </Link>
           </div>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </header>
 
         <div className="hidden md:flex justify-end absolute top-6 right-8 z-10">
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </div>
 
         <div className="mx-auto max-w-7xl px-8 lg:px-12 py-10 w-full mt-12 md:mt-0">

@@ -33,14 +33,22 @@ export async function sendEmail(
   body: string,
 ) {
   try {
-    const data = await resend.emails.send({
-      // Resend allows you to use this specific onboarding address for testing
-      from: "RepFit <onboarding@resend.dev>",
-      to: [toEmail],
+    // 1. Destructure both data and error from the response
+    const { data, error } = await resend.emails.send({
+      from: "RepFit <onboarding@resend.dev>", // (Keep your existing 'from' address)
+      to: toEmail,
       subject: subject,
-      text: body, // Sending plain text for the MVP to match SMS style
+      text: body,
     });
-    return { success: true, messageId: data.id };
+
+    // 2. Check if Resend returned an API error
+    if (error) {
+      console.error(`Resend API error for ${toEmail}:`, error);
+      return { success: false, error };
+    }
+
+    // 3. Safely return the ID using the optional chaining operator (?)
+    return { success: true, messageId: data?.id };
   } catch (error) {
     console.error(`Resend failed to send to ${toEmail}:`, error);
     return { success: false, error };
