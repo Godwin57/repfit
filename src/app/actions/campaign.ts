@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { currentUser } from "@clerk/nextjs/server";
 import Papa from "papaparse";
 import { GoogleGenerativeAI } from "@google/generative-ai";
