@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { currentUser } from "@clerk/nextjs/server";
 import Papa from "papaparse";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -20,11 +21,6 @@ export interface CustomerMessage {
   message: string;
 }
 
-/**
- * Accepts a base64 string or raw text of a CSV file.
- * Uses papaparse to extract Name, Phone, and Email columns.
- * Returns the parsed array of customers.
- */
 export async function processCsvUpload(
   csvInput: string,
 ): Promise<CustomerData[]> {
@@ -78,19 +74,6 @@ export async function processCsvUpload(
   });
 }
 
-/**
- * Accepts an array of customers and the "AI Message Context" string.
- * Prompts Gemini API to generate a personalized message.
- */
-/**
- * Accepts an array of customers, the "AI Message Context", and an optional gymOwnerId.
- * Prompts Gemini API to generate a personalized message containing the real review link.
- */
-/**
- * Accepts an array of customers, the "AI Message Context", and an optional gymOwnerId.
- * Prompts Gemini API to generate a personalized message containing the real review link.
- * Includes Automatic Retries for production reliability.
- */
 export async function generateAiMessages(
   customers: CustomerData[],
   context: string,
@@ -202,7 +185,7 @@ export async function saveCampaign(
     const fullName =
       `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Gym Owner";
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 2. Upsert the GymOwner before doing anything else
       await tx.gymOwner.upsert({
         where: { id: gymOwnerId },
