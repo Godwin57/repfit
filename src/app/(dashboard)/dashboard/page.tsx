@@ -118,7 +118,7 @@ export default async function DashboardPage() {
                   </td>
                 </tr>
               ) : (
-                recentCampaigns.map((campaign) => (
+                recentCampaigns.map((campaign: any) => (
                   <tr
                     key={campaign.id}
                     className="hover:bg-[#262626]/50 transition-colors border-b border-white/5 last:border-0 group"
