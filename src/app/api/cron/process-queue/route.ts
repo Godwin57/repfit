@@ -86,7 +86,7 @@ export async function GET(request: Request) {
     }
 
     // 5. Format data and trigger Gemini
-    const customersToProcess = requestsToProcess.map((req) => ({
+    const customersToProcess = requestsToProcess.map((req: any) => ({
       name: req.customer.name,
       phone: req.customer.phone || undefined,
       email: req.customer.email || undefined,
