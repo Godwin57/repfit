@@ -1,7 +1,6 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
 import { currentUser } from "@clerk/nextjs/server";
 import Papa from "papaparse";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -185,7 +184,7 @@ export async function saveCampaign(
     const fullName =
       `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Gym Owner";
 
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       // 2. Upsert the GymOwner before doing anything else
       await tx.gymOwner.upsert({
         where: { id: gymOwnerId },
