@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { PremiumButton } from "@/components/ui/PremiumButton";
+import Papa from "papaparse"; // SURGICAL CUT 1: Imported PapaParse
 import {
   Send,
   UploadCloud,
@@ -13,16 +14,15 @@ import {
   Mail,
   MessageSquare,
   AlertCircle,
-  Building, // NEW: Icon for the read-only profile badge
+  Building,
 } from "lucide-react";
 import {
-  processCsvUpload,
   generateAiMessages,
   saveCampaign,
   CustomerData,
   CustomerMessage,
-} from "@/app/actions/campaign";
-import { getGymSettings } from "@/app/actions/settings"; // NEW: Fetching the global settings
+} from "@/app/actions/campaign"; // Removed processCsvUpload
+import { getGymSettings } from "@/app/actions/settings";
 
 export default function ReviewRequestPage() {
   const [mode, setMode] = useState<"single" | "bulk">("bulk");
@@ -60,7 +60,9 @@ export default function ReviewRequestPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // NEW: Fetch settings on load
+  // SURGICAL CUT 2: Added error state for the UI
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   useEffect(() => {
     async function loadSettings() {
       if (!userId) return;
@@ -82,20 +84,44 @@ export default function ReviewRequestPage() {
     loadSettings();
   }, [userId]);
 
+  // SURGICAL CUT 3: Replaced backend processing with immediate client-side PapaParse
   const processFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const csvText = event.target?.result as string;
-      try {
-        const data = await processCsvUpload(csvText);
-        setParsedData(data);
+    setUploadError(null);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        if (results.errors.length > 0) {
+          setUploadError(`Error parsing file: ${results.errors[0].message}`);
+          return;
+        }
+
+        // Map the generated CSV structure to what the UI expects
+        const mappedData = results.data
+          .map((row: any) => ({
+            name:
+              row["First Name"] && row["Last Name"]
+                ? `${row["First Name"]} ${row["Last Name"]}`
+                : row.Name || row.name || "Unknown",
+            phone: row.Phone || row.phone || "",
+            email: row.Email || row.email || "",
+          }))
+          .filter((c) => c.name !== "Unknown" || c.phone || c.email); // Remove totally blank rows
+
+        if (mappedData.length === 0) {
+          setUploadError("Could not find Name or Phone columns in this CSV.");
+          return;
+        }
+
+        setParsedData(mappedData);
         setAiMessages([]);
         setSelectedCustomerIndex(0);
-      } catch (err) {
-        console.error("Failed to parse CSV", err);
-      }
-    };
-    reader.readAsText(file);
+      },
+      error: (err) => {
+        setUploadError(`File reading error: ${err.message}`);
+      },
+    });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,7 +224,6 @@ export default function ReviewRequestPage() {
     }
   };
 
-  // Prevent accessing the tool if profile is incomplete
   if (isSettingsLoading) {
     return (
       <div className="flex h-full items-center justify-center text-[#adaaaa] min-h-[600px]">
@@ -223,7 +248,6 @@ export default function ReviewRequestPage() {
             and Sender Details in your settings.
           </p>
           <div className="relative z-10 w-full md:w-fit mx-auto">
-            {/* You can change this button to use a Next.js <Link> to your settings page if you prefer! */}
             <PremiumButton
               onClick={() => (window.location.href = "/settings")}
               className="w-full md:w-auto"
@@ -438,16 +462,23 @@ export default function ReviewRequestPage() {
                     </>
                   )}
                 </h3>
-                <p className="text-[#adaaaa] text-xs md:text-sm mt-2 font-sans px-4">
-                  {parsedData.length > 0
-                    ? `${parsedData.length} records parsed successfully`
-                    : "Supported format: .csv with Name, Phone columns"}
-                </p>
+
+                {/* SURGICAL CUT 4: Conditional rendering for the visual error state */}
+                {uploadError ? (
+                  <p className="text-[#ff3333] text-xs md:text-sm mt-2 font-sans px-4 flex items-center justify-center gap-1">
+                    <AlertCircle size={14} /> {uploadError}
+                  </p>
+                ) : (
+                  <p className="text-[#adaaaa] text-xs md:text-sm mt-2 font-sans px-4">
+                    {parsedData.length > 0
+                      ? `${parsedData.length} records parsed successfully`
+                      : "Supported format: .csv with Name, Phone columns"}
+                  </p>
+                )}
               </label>
 
               <div className="bg-[#131313] p-5 md:p-10 rounded-[4px] flex flex-col gap-6 md:gap-8 min-w-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
-                  {/* NEW: Read-Only Identity Badge replacing the inputs */}
                   <div className="flex flex-col gap-2">
                     <label
                       className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
@@ -470,7 +501,6 @@ export default function ReviewRequestPage() {
                     </div>
                   </div>
 
-                  {/* Active Channels Box */}
                   <div className="flex flex-col gap-4 min-w-0 md:pl-8 md:border-l md:border-[#484847]/30">
                     <label
                       className="text-[10px] uppercase tracking-widest text-[#adaaaa] font-bold"
